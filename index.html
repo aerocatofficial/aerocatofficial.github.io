@@ -3,102 +3,145 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aero Cat (ACAT) | Majestic Anime DeFi</title>
+    <title>Aero Cat (ACAT) | Majestic 3D Ecosystem</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;900&family=Poppins:wght@300;600&display=swap" rel="stylesheet">
     <style>
-        :root { --primary: #00e5ff; --primary-glow: rgba(0, 229, 255, 0.5); --bg: #010204; --accent: rgba(0, 229, 255, 0.1); }
+        :root { --primary: #00e5ff; --primary-glow: rgba(0, 229, 255, 0.4); --bg: #010204; --accent: rgba(0, 229, 255, 0.1); }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { background: var(--bg); color: white; font-family: 'Poppins', sans-serif; overflow-x: hidden; scroll-behavior: smooth; }
 
-        /* Cinematic Background */
-        .hero-bg { position: fixed; width: 100vw; height: 100vh; z-index: -1; background: #000; overflow: hidden; }
-        .stars { position: absolute; width: 100%; height: 100%; background: url('https://www.transparenttextures.com/patterns/stardust.png'); animation: spaceMove 150s linear infinite; opacity: 0.5; }
-        @keyframes spaceMove { from { background-position: 0 0; } to { background-position: -1000px 1000px; } }
+        /* Space Background with Depth */
+        .hero-bg { position: fixed; width: 100vw; height: 100vh; z-index: -1; background: radial-gradient(circle at 50% 50%, #0a111a 0%, #010204 100%); overflow: hidden; }
+        .stars { position: absolute; width: 200%; height: 200%; background: url('https://www.transparenttextures.com/patterns/stardust.png'); animation: spaceMove 120s linear infinite; opacity: 0.4; }
+        @keyframes spaceMove { from { transform: translate(0,0); } to { transform: translate(-500px, -500px); } }
 
-        /* Main Section */
+        /* Main Hero Section */
         .hero { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 120px 10%; position: relative; }
         
-        /* 3D Majestic Floating Logo */
-        .coin-3d { perspective: 1500px; margin: 30px 0; }
-        .logo-main { 
-            width: clamp(280px, 35vw, 550px); 
-            filter: drop-shadow(0 0 50px var(--primary-glow)); 
-            animation: rotate3D 15s infinite linear, float 8s infinite ease-in-out; 
+        /* 3D Giant Logo */
+        .coin-wrap { perspective: 2000px; margin: 40px 0; z-index: 10; }
+        .main-logo { 
+            width: clamp(300px, 40vw, 550px); 
+            filter: drop-shadow(0 0 60px var(--primary-glow)); 
+            animation: majesticFloat 6s infinite ease-in-out;
+            transition: 0.1s ease-out;
         }
-        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-30px); } }
-        @keyframes rotate3D { from { transform: rotateY(0deg); } to { transform: rotateY(360deg); } }
+        @keyframes majesticFloat { 0%, 100% { transform: translateY(0) rotateY(0deg); } 50% { transform: translateY(-30px) rotateY(10deg); } }
 
-        /* Shine Effect for Aero Cat */
+        /* Headlines */
         h1 { 
             font-family: 'Orbitron', sans-serif; 
-            font-size: clamp(3.5rem, 12vw, 8.5rem); 
+            font-size: clamp(3.5rem, 12vw, 9rem); 
             background: linear-gradient(90deg, #fff, var(--primary), #fff); 
             background-size: 200% auto;
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             animation: shine 4s linear infinite;
             letter-spacing: 5px;
-            margin: 10px 0;
         }
         @keyframes shine { to { background-position: 200% center; } }
 
-        /* Description & Button */
-        .desc-premium { font-size: 1.5rem; line-height: 2; opacity: 0.8; max-width: 900px; margin: 40px auto; color: #b0c4de; font-weight: 300; }
-        .desc-premium b { color: white; font-weight: 600; }
-
-        .btn-mega-glow { 
-            padding: 25px 80px; 
-            font-size: 1.6rem; 
-            font-family: 'Orbitron'; 
-            font-weight: 900; 
-            background: var(--primary); 
-            color: black; 
-            border-radius: 100px; 
-            text-decoration: none; 
-            transition: 0.4s;
-            box-shadow: 0 0 30px var(--primary);
-            display: inline-block;
-            animation: pulseBtn 3s infinite;
+        /* Floating Anime Girl (Desktop Optimized) */
+        .anime-hero { 
+            position: absolute; bottom: 0; right: 2%; width: 320px; 
+            filter: drop-shadow(0 0 20px var(--primary-glow)); 
+            opacity: 0.8; animation: slideUp 2s forwards; z-index: 1;
         }
-        @keyframes pulseBtn { 0% { box-shadow: 0 0 20px var(--primary); } 50% { box-shadow: 0 0 60px var(--primary); } 100% { box-shadow: 0 0 20px var(--primary); } }
-        .btn-mega-glow:hover { transform: scale(1.1) rotate(1deg); box-shadow: 0 0 80px var(--primary); }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(50px); } to { opacity: 0.8; transform: translateY(0); } }
 
-        /* Sections and Grids */
-        .vision-section { max-width: 1200px; margin: 100px auto; padding: 100px 5%; background: rgba(255,255,255,0.01); border-radius: 60px; border: 1px solid var(--accent); backdrop-filter: blur(20px); text-align: center; }
-        .vision-section h2 { font-family: 'Orbitron'; font-size: 3rem; margin-bottom: 40px; color: var(--primary); }
-        .vision-section p { font-size: 1.3rem; line-height: 1.9; color: #b0c4de; }
+        /* Stats & Info Cards */
+        .grid-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 40px; padding: 100px 10%; position: relative; z-index: 5; }
+        .info-card { 
+            background: rgba(255,255,255,0.02); 
+            border: 1px solid var(--accent); 
+            padding: 60px 40px; 
+            border-radius: 50px; 
+            backdrop-filter: blur(20px);
+            width: 100%; max-width: 500px;
+            transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            opacity: 0; transform: translateY(50px);
+        }
+        .info-card.active { opacity: 1; transform: translateY(0); }
+        .info-card:hover { border-color: var(--primary); background: rgba(0, 229, 255, 0.05); transform: translateY(-15px) scale(1.02); box-shadow: 0 30px 60px rgba(0,0,0,0.5); }
 
+        /* Mega Button */
+        .mega-btn { 
+            padding: 25px 80px; background: var(--primary); color: #000; 
+            font-family: 'Orbitron'; font-weight: 900; border-radius: 100px; 
+            text-decoration: none; font-size: 1.5rem; margin-top: 40px;
+            box-shadow: 0 0 30px var(--primary-glow); transition: 0.4s;
+            display: inline-block; animation: pulse 2s infinite;
+        }
+        @keyframes pulse { 0% { box-shadow: 0 0 20px var(--primary); } 50% { box-shadow: 0 0 50px var(--primary); } 100% { box-shadow: 0 0 20px var(--primary); } }
+        .mega-btn:hover { transform: scale(1.1); letter-spacing: 5px; background: #fff; }
+
+        .desc-text { font-size: 1.4rem; line-height: 2; opacity: 0.7; margin: 40px auto; max-width: 800px; }
+
+        @media (max-width: 1024px) {
+            .anime-hero { position: relative; width: 250px; margin-top: 50px; }
+            .hero { padding-top: 80px; }
+        }
     </style>
 </head>
 <body>
 
-    <div class="hero-bg">
-        <div class="stars"></div>
-    </div>
+    <div class="hero-bg"><div class="stars"></div></div>
 
     <section class="hero">
-        <p style="letter-spacing: 12px; color: var(--primary); font-weight: bold; font-size: 0.9rem;">OFFICIAL ECOSYSTEM</p>
-        
-        <div class="coin-3d">
-            <img src="https://raw.githubusercontent.com/aerocatofficial/aerocatofficial.github.io/main/Aero-Cat.svg" class="logo-main">
+        <div class="reveal">
+            <p style="letter-spacing: 12px; color: var(--primary); font-weight: bold; margin-bottom: 10px;">AERO CAT ECOSYSTEM</p>
+            <h1>AERO CAT</h1>
         </div>
 
-        <h1>AERO CAT</h1>
-        
-        <div class="desc-premium">
-            A community-owned project blending the boundaries of <b>Defi</b> and <b>Anime Aesthetics</b>. We create high-performance assets for the next generation of global holders.
+        <div class="coin-wrap">
+            <img src="https://raw.githubusercontent.com/aerocatofficial/aerocatofficial.github.io/main/Aero-Cat.svg" class="main-logo" id="logo3d">
         </div>
-        
-        <a href="https://bscscan.com/token/0xf305Efbfc43134FB37cd8BB3D7868a5E68272316" class="btn-mega-glow">EXPLORE CONTRACT</a>
+
+        <div class="reveal">
+            <p class="desc-text">The world's first high-performance <b>Anime-Integrated</b> token on the Binance Smart Chain. Transparency meets Innovation.</p>
+            <a href="https://bscscan.com/token/0xf305Efbfc43134FB37cd8BB3D7868a5E68272316" class="mega-btn">VIEW CONTRACT</a>
+        </div>
+
+        <img src="https://cdn.pixabay.com/photo/2023/09/05/16/39/anime-8235471_1280.png" class="anime-hero">
     </section>
 
-    <section class="vision-section">
-        <h2>OUR LEGACY</h2>
-        <p>Aero Cat (ACAT) is designed for stability and massive community growth. With zero tax, locked liquidity, and a 100% decentralized power structure, we are building an anime empire on the Binance Smart Chain where transparency is our foundation. Join the revolution today.</p>
-    </section>
+    <div class="grid-container">
+        <div class="info-card">
+            <h2 style="color: var(--primary); font-family: 'Orbitron'; margin-bottom: 25px; font-size: 2rem;">TOKENOMICS</h2>
+            <p style="font-size: 1.3rem; line-height: 2; opacity: 0.8;">Total Supply: <b>20,000,000 ACAT</b><br>Tax: <b>0%</b> Buy / Sell<br>Security: <b>Liquidity Locked</b></p>
+        </div>
+        <div class="info-card">
+            <h2 style="color: var(--primary); font-family: 'Orbitron'; margin-bottom: 25px; font-size: 2rem;">THE VISION</h2>
+            <p style="font-size: 1.3rem; line-height: 2; opacity: 0.8;">Building a community-driven anime empire where decentralization is the priority. No rugs, no owners, just <b>Aero Cat</b> power.</p>
+        </div>
+    </div>
 
-    <p style="text-align: center; padding: 100px 50px; opacity: 0.3; font-size: 0.8rem; letter-spacing: 5px;">© 2026 AERO CAT WORLDWIDE. ALL RIGHTS RESERVED.</p>
+    <script>
+        // Smooth Reveal on Scroll
+        const observerOptions = { threshold: 0.2 };
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('active');
+                }
+            });
+        }, observerOptions);
 
+        document.querySelectorAll('.info-card').forEach(card => observer.observe(card));
+
+        // Advance 3D Logo Tilt (Follows Mouse)
+        const logo = document.getElementById('logo3d');
+        document.addEventListener('mousemove', (e) => {
+            let xAxis = (window.innerWidth / 2 - e.pageX) / 15;
+            let yAxis = (window.innerHeight / 2 - e.pageY) / 15;
+            logo.style.transform = `rotateY(${xAxis}deg) rotateX(${yAxis}deg) translateY(-20px)`;
+        });
+
+        // Reset logo on mouse leave
+        document.addEventListener('mouseleave', () => {
+            logo.style.transform = `rotateY(0deg) rotateX(0deg) translateY(0px)`;
+        });
+    </script>
 </body>
 </html>
