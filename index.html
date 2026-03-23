@@ -3,85 +3,71 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aero Cat (ACAT) | Cinematic 3D</title>
+    <title>Aero Cat (ACAT) | Majestic Anime DeFi</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;900&family=Poppins:wght@300;600&display=swap" rel="stylesheet">
     <style>
-        :root { --primary: #00e5ff; --bg: #010204; --accent: rgba(0, 229, 255, 0.15); }
+        :root { --primary: #00e5ff; --primary-glow: rgba(0, 229, 255, 0.5); --bg: #010204; --accent: rgba(0, 229, 255, 0.1); }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { background: var(--bg); color: white; font-family: 'Poppins', sans-serif; overflow-x: hidden; scroll-behavior: smooth; }
 
-        /* Animated Space Background */
+        /* Cinematic Background */
         .hero-bg { position: fixed; width: 100vw; height: 100vh; z-index: -1; background: #000; overflow: hidden; }
-        .stars { position: absolute; width: 100%; height: 100%; background: url('https://www.transparenttextures.com/patterns/stardust.png'); animation: spaceMove 100s linear infinite; }
-        @keyframes spaceMove { from { background-position: 0 0; } to { background-position: 1000px 1000px; } }
+        .stars { position: absolute; width: 100%; height: 100%; background: url('https://www.transparenttextures.com/patterns/stardust.png'); animation: spaceMove 150s linear infinite; opacity: 0.5; }
+        @keyframes spaceMove { from { background-position: 0 0; } to { background-position: -1000px 1000px; } }
 
-        /* Cinematic Entrance */
-        .reveal-text { opacity: 0; transform: translateY(30px); animation: fadeInUp 1.5s forwards; }
-        @keyframes fadeInUp { to { opacity: 1; transform: translateY(0); } }
-
-        /* Giant 3D Floating & Rotating Logo */
-        .coin-wrap { perspective: 1500px; display: flex; justify-content: center; align-items: center; margin: 50px 0; }
-        .main-logo { 
+        /* Main Section */
+        .hero { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 120px 10%; position: relative; }
+        
+        /* 3D Majestic Floating Logo */
+        .coin-3d { perspective: 1500px; margin: 30px 0; }
+        .logo-main { 
             width: clamp(280px, 35vw, 550px); 
-            filter: drop-shadow(0 0 40px var(--primary)); 
-            animation: majesticFloat 8s infinite ease-in-out, rotate3D 15s infinite linear; 
+            filter: drop-shadow(0 0 50px var(--primary-glow)); 
+            animation: rotate3D 15s infinite linear, float 8s infinite ease-in-out; 
         }
-        @keyframes majesticFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-40px); } }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-30px); } }
         @keyframes rotate3D { from { transform: rotateY(0deg); } to { transform: rotateY(360deg); } }
 
-        /* Section Layouts */
-        .hero { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 100px 10%; }
-        
-        /* Animated Headlines */
+        /* Shine Effect for Aero Cat */
         h1 { 
             font-family: 'Orbitron', sans-serif; 
-            font-size: clamp(3.5rem, 12vw, 8rem); 
+            font-size: clamp(3.5rem, 12vw, 8.5rem); 
             background: linear-gradient(90deg, #fff, var(--primary), #fff); 
             background-size: 200% auto;
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            animation: shine 3s linear infinite;
+            animation: shine 4s linear infinite;
+            letter-spacing: 5px;
+            margin: 10px 0;
         }
         @keyframes shine { to { background-position: 200% center; } }
 
-        /* Anime Greet Girl (Namaste) */
-        .anime-hero { width: 350px; opacity: 0; animation: girlFade 2s forwards 1s; filter: drop-shadow(0 0 15px var(--primary)); }
-        @keyframes girlFade { from { opacity: 0; transform: translateX(50px); } to { opacity: 1; transform: translateX(0); } }
+        /* Description & Button */
+        .desc-premium { font-size: 1.5rem; line-height: 2; opacity: 0.8; max-width: 900px; margin: 40px auto; color: #b0c4de; font-weight: 300; }
+        .desc-premium b { color: white; font-weight: 600; }
 
-        /* Information Grid with Hover Tilt */
-        .grid-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; padding: 100px 10%; }
-        .info-card { 
-            background: rgba(255,255,255,0.02); 
-            border: 1px solid var(--accent); 
-            padding: 50px; 
-            border-radius: 40px; 
-            backdrop-filter: blur(15px);
-            transition: 0.5s;
-            opacity: 0; transform: scale(0.9);
-        }
-        .info-card.active { opacity: 1; transform: scale(1); }
-        .info-card:hover { background: rgba(0, 229, 255, 0.05); border-color: var(--primary); transform: translateY(-20px); }
-
-        /* Mega Button with Pulse */
-        .mega-btn { 
-            padding: 25px 60px; 
-            background: var(--primary); 
-            color: #000; 
+        .btn-mega-glow { 
+            padding: 25px 80px; 
+            font-size: 1.6rem; 
             font-family: 'Orbitron'; 
             font-weight: 900; 
+            background: var(--primary); 
+            color: black; 
             border-radius: 100px; 
             text-decoration: none; 
-            font-size: 1.5rem;
-            box-shadow: 0 0 20px var(--primary);
             transition: 0.4s;
+            box-shadow: 0 0 30px var(--primary);
             display: inline-block;
-            animation: pulseBtn 2s infinite;
+            animation: pulseBtn 3s infinite;
         }
-        @keyframes pulseBtn { 0% { box-shadow: 0 0 20px var(--primary); } 50% { box-shadow: 0 0 50px var(--primary); } 100% { box-shadow: 0 0 20px var(--primary); } }
-        .mega-btn:hover { transform: scale(1.1); letter-spacing: 5px; }
+        @keyframes pulseBtn { 0% { box-shadow: 0 0 20px var(--primary); } 50% { box-shadow: 0 0 60px var(--primary); } 100% { box-shadow: 0 0 20px var(--primary); } }
+        .btn-mega-glow:hover { transform: scale(1.1) rotate(1deg); box-shadow: 0 0 80px var(--primary); }
 
-        .desc-text { font-size: 1.4rem; line-height: 2; opacity: 0.7; margin: 40px 0; }
+        /* Sections and Grids */
+        .vision-section { max-width: 1200px; margin: 100px auto; padding: 100px 5%; background: rgba(255,255,255,0.01); border-radius: 60px; border: 1px solid var(--accent); backdrop-filter: blur(20px); text-align: center; }
+        .vision-section h2 { font-family: 'Orbitron'; font-size: 3rem; margin-bottom: 40px; color: var(--primary); }
+        .vision-section p { font-size: 1.3rem; line-height: 1.9; color: #b0c4de; }
 
     </style>
 </head>
@@ -92,53 +78,27 @@
     </div>
 
     <section class="hero">
-        <div class="reveal-text">
-            <p style="letter-spacing: 10px; color: var(--primary); font-weight: bold;">PROJECT CATALIST</p>
-            <h1>AERO CAT</h1>
-        </div>
-
-        <div class="coin-wrap reveal-text" style="animation-delay: 0.5s;">
-            <img src="https://raw.githubusercontent.com/aerocatofficial/aerocatofficial.github.io/main/Aero-Cat.svg" class="main-logo">
-        </div>
-
-        <img src="https://cdn.pixabay.com/photo/2023/09/05/16/39/anime-8235471_1280.png" class="anime-hero">
+        <p style="letter-spacing: 12px; color: var(--primary); font-weight: bold; font-size: 0.9rem;">OFFICIAL ECOSYSTEM</p>
         
-        <div class="reveal-text" style="animation-delay: 1s;">
-            <p class="desc-text">The fusion of <b>Advanced DeFi</b> and <b>Anime Aesthetics</b>. <br> Built for the next generation of crypto enthusiasts.</p>
-            <a href="https://bscscan.com/token/0xf305Efbfc43134FB37cd8BB3D7868a5E68272316" class="mega-btn">ENTER CONTRACT</a>
+        <div class="coin-3d">
+            <img src="https://raw.githubusercontent.com/aerocatofficial/aerocatofficial.github.io/main/Aero-Cat.svg" class="logo-main">
         </div>
+
+        <h1>AERO CAT</h1>
+        
+        <div class="desc-premium">
+            A community-owned project blending the boundaries of <b>Defi</b> and <b>Anime Aesthetics</b>. We create high-performance assets for the next generation of global holders.
+        </div>
+        
+        <a href="https://bscscan.com/token/0xf305Efbfc43134FB37cd8BB3D7868a5E68272316" class="btn-mega-glow">EXPLORE CONTRACT</a>
     </section>
 
-    <div class="grid-container">
-        <div class="info-card">
-            <h2 style="color: var(--primary); font-family: 'Orbitron'; margin-bottom: 20px;">TOKENOMICS</h2>
-            <p style="font-size: 1.2rem; line-height: 1.8;">Total Supply: 20,000,000 ACAT<br>Tax: 0% Buy / 0% Sell<br>Liquidity: Burnt & Locked Forever.</p>
-        </div>
-        <div class="info-card">
-            <h2 style="color: var(--primary); font-family: 'Orbitron'; margin-bottom: 20px;">VISION</h2>
-            <p style="font-size: 1.2rem; line-height: 1.8;">Building a decentralized anime empire where every holder wins. No rug, no owner, 100% community power.</p>
-        </div>
-    </div>
+    <section class="vision-section">
+        <h2>OUR LEGACY</h2>
+        <p>Aero Cat (ACAT) is designed for stability and massive community growth. With zero tax, locked liquidity, and a 100% decentralized power structure, we are building an anime empire on the Binance Smart Chain where transparency is our foundation. Join the revolution today.</p>
+    </section>
 
-    <script>
-        // Scroll Reveal Logic for Cards
-        window.addEventListener('scroll', () => {
-            const cards = document.querySelectorAll('.info-card');
-            cards.forEach(card => {
-                const pos = card.getBoundingClientRect().top;
-                if (pos < window.innerHeight - 100) {
-                    card.classList.add('active');
-                }
-            });
-        });
+    <p style="text-align: center; padding: 100px 50px; opacity: 0.3; font-size: 0.8rem; letter-spacing: 5px;">© 2026 AERO CAT WORLDWIDE. ALL RIGHTS RESERVED.</p>
 
-        // Mouse Move Tilt Effect for Logo
-        document.addEventListener('mousemove', (e) => {
-            const logo = document.querySelector('.main-logo');
-            let x = (window.innerWidth / 2 - e.pageX) / 25;
-            let y = (window.innerHeight / 2 - e.pageY) / 25;
-            logo.style.transform = `rotateY(${x}deg) rotateX(${y}deg)`;
-        });
-    </script>
 </body>
 </html>
