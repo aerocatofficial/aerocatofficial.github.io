@@ -3,98 +3,135 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aero Cat | Created by EnAmor</title>
+    <title>Aero Cat | 4-Page Ecosystem</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;900&family=Poppins:wght@300;600&display=swap" rel="stylesheet">
     <style>
-        :root { --primary: #00e5ff; --bg: #00050a; --glass: rgba(0, 229, 255, 0.05); }
-        * { margin: 0; padding: 0; box-sizing: border-box; cursor: crosshair; }
-        body { background: var(--bg); color: white; font-family: sans-serif; overflow-x: hidden; }
+        :root { --primary: #00e5ff; --bg: #010204; --glass: rgba(0, 229, 255, 0.05); }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: var(--bg); color: white; font-family: 'Poppins', sans-serif; overflow: hidden; }
 
-        /* Animated Dark Void Background */
-        .void { position: fixed; width: 100vw; height: 100vh; z-index: -1; background: radial-gradient(circle at 50% 50%, #001a22 0%, #000 100%); }
-        .energy-line { position: absolute; background: var(--primary); opacity: 0.1; box-shadow: 0 0 20px var(--primary); animation: moveLine 10s infinite linear; }
-        @keyframes moveLine { from { transform: translateY(-100vh) rotate(45deg); } to { transform: translateY(100vh) rotate(45deg); } }
+        /* Sukuna Welcome Screen */
+        #welcome-screen { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; flex-direction: column; transition: opacity 1s ease-out; }
+        .sukuna-text { font-family: 'Orbitron'; font-size: 3rem; color: #ff003c; letter-spacing: 10px; animation: glitch 0.2s infinite; text-transform: uppercase; text-align: center; }
+        @keyframes glitch { 0% { transform: translate(2px, 2px); } 50% { transform: translate(-2px, -2px); } 100% { transform: translate(0, 0); } }
 
-        /* The Hidden Creator Name (EnAmor) */
-        .creator-hint { position: fixed; bottom: 20px; left: 20px; font-size: 0.6rem; opacity: 0.1; transition: 1s; letter-spacing: 5px; }
-        .creator-hint:hover { opacity: 0.8; color: var(--primary); text-shadow: 0 0 10px var(--primary); }
+        /* 3D Background */
+        .void { position: fixed; width: 100vw; height: 100vh; z-index: -1; background: radial-gradient(circle at 50% 50%, #0a111a 0%, #010204 100%); }
+        .stars { position: absolute; width: 200%; height: 200%; background: url('https://www.transparenttextures.com/patterns/stardust.png'); animation: spaceMove 150s linear infinite; opacity: 0.3; }
+        @keyframes spaceMove { from { transform: translate(0,0); } to { transform: translate(-500px, -500px); } }
 
-        .container { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 50px 20px; }
+        /* Navigation Bar */
+        nav { position: fixed; top: 0; width: 100%; padding: 20px; background: rgba(1, 2, 4, 0.8); backdrop-filter: blur(10px); z-index: 100; display: flex; justify-content: center; gap: 30px; border-bottom: 1px solid var(--glass); }
+        .nav-link { color: white; text-decoration: none; font-family: 'Orbitron'; font-size: 1.1rem; letter-spacing: 2px; cursor: pointer; transition: 0.3s; padding: 10px 20px; border-radius: 10px; }
+        .nav-link:hover, .nav-link.active { background: var(--glass); color: var(--primary); box-shadow: 0 0 15px var(--glass); }
 
-        /* Floating 3D Logo */
-        .logo-box { perspective: 1000px; margin-bottom: 30px; }
-        .logo-main { 
-            width: 280px; filter: drop-shadow(0 0 40px var(--primary)); 
-            animation: float 5s infinite ease-in-out;
-            transition: 0.2s;
-        }
-        @keyframes float { 0%, 100% { transform: translateY(0) rotateY(0deg); } 50% { transform: translateY(-30px) rotateY(20deg); } }
+        /* Pages Setup */
+        .page { display: none; height: 100vh; padding-top: 80px; flex-direction: column; align-items: center; justify-content: center; text-align: center; animation: fadeIn 0.5s forwards; }
+        .page.active { display: flex; }
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
 
-        h1 { font-size: 5rem; letter-spacing: 15px; text-transform: uppercase; color: #fff; text-shadow: 0 0 30px var(--primary); margin-bottom: 20px; }
+        /* 3D Logo */
+        .logo-box { perspective: 1000px; margin-bottom: 20px; }
+        .logo-main { width: 250px; filter: drop-shadow(0 0 40px var(--primary)); animation: float 5s infinite ease-in-out; }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
 
-        /* Financial Weapon Card */
-        .weapon-card { 
-            background: var(--glass); border: 1px solid rgba(0, 229, 255, 0.2); 
-            padding: 40px; border-radius: 0px; backdrop-filter: blur(20px);
-            max-width: 600px; position: relative; overflow: hidden;
-        }
-        .weapon-card::before { content: 'POWER'; position: absolute; top: -10px; left: -10px; font-size: 5rem; opacity: 0.05; font-weight: 900; }
+        h1 { font-family: 'Orbitron'; font-size: clamp(3rem, 8vw, 6rem); color: #fff; text-shadow: 0 0 30px var(--primary); letter-spacing: 10px; margin-bottom: 10px; }
 
-        .btn-trade { 
-            display: inline-block; margin-top: 40px; padding: 20px 50px; 
-            background: none; border: 1px solid var(--primary); color: var(--primary);
-            font-weight: bold; text-decoration: none; letter-spacing: 5px;
-            transition: 0.5s;
-        }
-        .btn-trade:hover { background: var(--primary); color: #000; box-shadow: 0 0 50px var(--primary); }
+        /* Stats Grid (Tokenomics) */
+        .grid-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 30px; width: 80%; max-width: 1000px; }
+        .stat-card { background: var(--glass); border: 1px solid rgba(0,229,255,0.2); padding: 40px; border-radius: 20px; backdrop-filter: blur(10px); transition: 0.3s; }
+        .stat-card:hover { transform: translateY(-10px); box-shadow: 0 0 30px var(--glass); border-color: var(--primary); }
+        .stat-card h3 { color: var(--primary); font-family: 'Orbitron'; margin-bottom: 15px; font-size: 1.5rem; }
+        .stat-card p { font-size: 1.2rem; font-weight: bold; }
 
-        /* Sukuna Presence (Glitch Effect) */
-        .sukuna-spirit { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 15vw; opacity: 0.02; pointer-events: none; z-index: -1; }
+        /* Paragraphs */
+        .desc-text { font-size: 1.3rem; line-height: 2; opacity: 0.8; max-width: 800px; padding: 20px; }
+
+        /* Button */
+        .btn-trade { display: inline-block; padding: 20px 60px; background: var(--primary); color: #000; font-family: 'Orbitron'; font-weight: 900; border-radius: 100px; text-decoration: none; font-size: 1.3rem; box-shadow: 0 0 30px rgba(0,229,255,0.4); transition: 0.3s; margin-top: 30px; }
+        .btn-trade:hover { transform: scale(1.1); }
+
+        .creator-hint { position: fixed; bottom: 10px; right: 20px; font-size: 0.7rem; opacity: 0.2; letter-spacing: 3px; }
     </style>
 </head>
 <body>
 
-    <div class="void" id="voidLines"></div>
-    <div class="sukuna-spirit">RYOMEN</div>
+    <div id="welcome-screen">
+        <div class="sukuna-text">"DOMAIN EXPANSION"<br><span style="font-size: 1.5rem; color: #fff; letter-spacing: 5px;">Aero Cat Welcomes You</span></div>
+    </div>
 
-    <div class="container">
+    <div class="void"><div class="stars"></div></div>
+
+    <nav>
+        <div class="nav-link active" onclick="showPage('home')">HOME</div>
+        <div class="nav-link" onclick="showPage('tokenomics')">TOKENOMICS</div>
+        <div class="nav-link" onclick="showPage('vision')">VISION</div>
+        <div class="nav-link" onclick="showPage('portal')">PORTAL</div>
+    </nav>
+
+    <section id="home" class="page active">
         <div class="logo-box">
             <img src="https://raw.githubusercontent.com/aerocatofficial/aerocatofficial.github.io/main/Aero-Cat.svg" class="logo-main" id="acat-logo">
         </div>
+        <h1>AERO CAT</h1>
+        <p style="letter-spacing: 5px; color: var(--primary);">THE ULTIMATE DEFI WEAPON</p>
+    </section>
 
-        <h1>Aero Cat</h1>
-        
-        <div class="weapon-card">
-            <p style="font-size: 1.2rem; line-height: 1.8; letter-spacing: 2px;">
-                Designed for those who seek dominance. <br>
-                A financial instrument built on the BSC Network. <br>
-                <b>0% TAX. NO SOCIALS. NO MERCY.</b>
-            </p>
+    <section id="tokenomics" class="page">
+        <h1 style="font-size: 4rem; margin-bottom: 40px;">SUPPLY & STATS</h1>
+        <div class="grid-container">
+            <div class="stat-card"><h3>TOTAL SUPPLY</h3><p>20,000,000 ACAT</p></div>
+            <div class="stat-card"><h3>TAX STRUCTURE</h3><p>0% BUY / 0% SELL</p></div>
+            <div class="stat-card"><h3>LIQUIDITY</h3><p>100% LOCKED</p></div>
+            <div class="stat-card"><h3>OWNERSHIP</h3><p>RENOUNCED</p></div>
         </div>
+    </section>
 
-        <a href="https://bscscan.com/token/0xf305Efbfc43134FB37cd8BB3D7868a5E68272316" class="btn-trade">EXECUTE CONTRACT</a>
-    </div>
+    <section id="vision" class="page">
+        <h1 style="font-size: 4rem;">OUR LEGACY</h1>
+        <p class="desc-text">
+            Aero Cat is not just a token; it is a movement. <br><br>
+            Built on the Binance Smart Chain, it merges the relentless power of Anime with the financial freedom of DeFi. We operate in the shadows, creating wealth for the true believers. No false promises, just raw code and a decentralized empire.
+        </p>
+    </section>
 
-    <div class="creator-hint">CREATOR: ENAMOR</div>
+    <section id="portal" class="page">
+        <h1 style="font-size: 4rem;">EXECUTE</h1>
+        <p class="desc-text">Enter the contract and join the revolution.</p>
+        <a href="https://bscscan.com/token/0xf305Efbfc43134FB37cd8BB3D7868a5E68272316" class="btn-trade">VIEW ON BSCSCAN</a>
+    </section>
+
+    <div class="creator-hint">ENAMOR</div>
 
     <script>
-        // Interactive Lines
-        const voidLines = document.getElementById('voidLines');
-        for(let i=0; i<20; i++) {
-            let line = document.createElement('div');
-            line.className = 'energy-line';
-            line.style.width = '1px';
-            line.style.height = '100vh';
-            line.style.left = Math.random() * 100 + 'vw';
-            line.style.animationDelay = Math.random() * 10 + 's';
-            voidLines.appendChild(line);
+        // Sukuna Welcome Screen Logic
+        setTimeout(() => {
+            const welcome = document.getElementById('welcome-screen');
+            welcome.style.opacity = '0';
+            setTimeout(() => welcome.style.display = 'none', 1000);
+        }, 2500); // 2.5 seconds screen time
+
+        // 4-Page Navigation Logic
+        function showPage(pageId) {
+            // Hide all pages
+            document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+            // Remove active class from all links
+            document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
+            
+            // Show selected page
+            document.getElementById(pageId).classList.add('active');
+            // Add active class to clicked link
+            event.target.classList.add('active');
         }
 
-        // Logo Mouse Follow
+        // 3D Logo Tilt
         document.addEventListener('mousemove', (e) => {
             const logo = document.getElementById('acat-logo');
-            let x = (window.innerWidth / 2 - e.pageX) / 20;
-            let y = (window.innerHeight / 2 - e.pageY) / 20;
-            logo.style.transform = `rotateY(${x}deg) rotateX(${y}deg)`;
+            if(logo) {
+                let x = (window.innerWidth / 2 - e.pageX) / 20;
+                let y = (window.innerHeight / 2 - e.pageY) / 20;
+                logo.style.transform = `rotateY(${x}deg) rotateX(${y}deg)`;
+            }
         });
     </script>
 </body>
