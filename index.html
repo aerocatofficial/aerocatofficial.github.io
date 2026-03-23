@@ -3,7 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aero Cat | Cinematic Scroll Ecosystem</title>
+    
+    <title>Aero Cat</title>
+    
+    <link rel="icon" type="image/svg+xml" href="https://raw.githubusercontent.com/aerocatofficial/aerocatofficial.github.io/main/Aero-Cat.svg">
+    
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;900&family=Poppins:wght@300;600&display=swap" rel="stylesheet">
     <style>
         :root { --primary: #00e5ff; --bg: #010204; --glass: rgba(0, 229, 255, 0.05); }
@@ -29,37 +33,38 @@
         /* Scroll Sections Setup */
         .section { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 100px 15px; position: relative; width: 100%; overflow: hidden; }
         
-        /* PREMIUM SCROLL ANIMATIONS */
         .hidden { opacity: 0; filter: blur(15px); transform: translateY(40px) scale(0.9); transition: all 1.2s cubic-bezier(0.25, 1, 0.5, 1); }
         .show { opacity: 1; filter: blur(0); transform: translateY(0) scale(1); }
         .delay-1 { transition-delay: 0.2s; }
         .delay-2 { transition-delay: 0.4s; }
 
-        /* 3D Logo Fix */
         .logo-box { perspective: 1000px; margin-bottom: 20px; width: 100%; display: flex; justify-content: center; }
         .logo-main { width: clamp(180px, 40vw, 280px); max-width: 70%; height: auto; filter: drop-shadow(0 0 40px rgba(0,229,255,0.4)); animation: float 6s infinite ease-in-out; }
         @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
 
         h1 { font-family: 'Orbitron'; font-size: clamp(2rem, 8vw, 6rem); color: #fff; text-shadow: 0 0 20px var(--primary); letter-spacing: clamp(3px, 2vw, 10px); margin-bottom: 10px; width: 100%; word-wrap: break-word; line-height: 1.1; }
 
-        /* Scroll Indicator Arrow */
         .scroll-down { position: absolute; bottom: 30px; color: var(--primary); font-size: 1.5rem; animation: bounce 2s infinite; opacity: 0.5; }
         @keyframes bounce { 0%, 20%, 50%, 80%, 100% { transform: translateY(0); } 40% { transform: translateY(-10px); } 60% { transform: translateY(-5px); } }
 
-        /* Stats Grid */
         .grid-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; width: 100%; max-width: 1000px; padding: 0 10px; }
         .stat-card { background: rgba(255,255,255,0.01); border: 1px solid rgba(0,229,255,0.1); padding: 30px 20px; border-radius: 20px; backdrop-filter: blur(10px); transition: 0.4s; }
         .stat-card h3 { color: var(--primary); font-family: 'Orbitron'; margin-bottom: 15px; font-size: 1.2rem; letter-spacing: 1px; }
         .stat-card p { font-size: 1.1rem; font-weight: bold; }
 
-        /* Paragraphs */
         .desc-text { font-size: clamp(0.9rem, 2.5vw, 1.3rem); line-height: 2; opacity: 0.7; max-width: 800px; margin: 0 auto; color: #b0c4de; padding: 0 10px; }
 
-        /* Button */
         .btn-trade { display: inline-block; padding: 15px 40px; background: var(--primary); color: #000; font-family: 'Orbitron'; font-weight: 900; border-radius: 100px; text-decoration: none; font-size: clamp(0.9rem, 2vw, 1.3rem); letter-spacing: 2px; box-shadow: 0 0 30px rgba(0,229,255,0.3); transition: 0.4s; margin-top: 30px; }
         .btn-trade:hover { transform: scale(1.05); background: #fff; }
 
         .creator-hint { position: fixed; bottom: 10px; right: 15px; font-size: 0.6rem; opacity: 0.2; letter-spacing: 3px; z-index: 100; }
+
+        @media (max-width: 768px) {
+            nav { gap: 10px; padding: 15px 5px; }
+            .nav-link { font-size: 0.7rem; padding: 5px; letter-spacing: 1px; }
+            .sukuna-text { font-size: 2rem; }
+            .grid-container { grid-template-columns: 1fr; padding: 0 20px; }
+        }
     </style>
 </head>
 <body>
@@ -88,7 +93,7 @@
     </section>
 
     <section id="tokenomics" class="section">
-        <h1 class="hidden">STATS</h1>
+        <h1 class="hidden" style="font-size: 4rem; margin-bottom: 60px;">SUPPLY & STATS</h1>
         <div class="grid-container">
             <div class="stat-card hidden delay-1"><h3>TOTAL SUPPLY</h3><p>20,000,000 ACAT</p></div>
             <div class="stat-card hidden delay-2"><h3>TAX</h3><p>0% BUY / SELL</p></div>
