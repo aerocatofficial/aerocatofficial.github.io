@@ -3,21 +3,97 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aero Cat (ACAT) Official</title>
+    <title>EnAmor | Play & Earn</title>
     <style>
-        body { font-family: sans-serif; text-align: center; background-color: #0d1117; color: white; padding: 50px; }
-        .container { background: #161b22; padding: 40px; border-radius: 20px; border: 1px solid #30363d; display: inline-block; }
-        img { width: 120px; border-radius: 50%; margin-bottom: 20px; border: 2px solid #f3ba2f; }
-        h1 { color: #f3ba2f; }
-        .address { background: #010409; padding: 15px; border-radius: 10px; font-family: monospace; font-size: 14px; border: 1px dashed #f3ba2f; word-break: break-all; margin: 20px 0; }
+        :root { --primary: #f3ba2f; --bg: #05070a; }
+        body { background: var(--bg); color: white; font-family: sans-serif; text-align: center; margin: 0; }
+        .card { background: rgba(255,255,255,0.05); backdrop-filter: blur(10px); border-radius: 30px; padding: 20px; margin: 20px auto; max-width: 400px; border: 1px solid rgba(255,255,255,0.1); }
+        
+        /* Game Styles */
+        #game-container { position: relative; width: 320px; height: 400px; background: #161b22; margin: 20px auto; border: 2px solid var(--primary); overflow: hidden; border-radius: 15px; display: none; }
+        #player { position: absolute; width: 40px; height: 40px; left: 50px; top: 180px; transition: 0.1s; }
+        .obstacle { position: absolute; width: 40px; background: #ff4d4d; bottom: 0; }
+        #score { font-size: 20px; color: var(--primary); margin-top: 10px; }
+        
+        .btn { display: inline-block; padding: 15px 30px; background: var(--primary); color: black; text-decoration: none; border-radius: 15px; font-weight: bold; cursor: pointer; border: none; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <img src="https://raw.githubusercontent.com/aerocatofficial/aerocatofficial.github.io/main/Aero-Cat.svg">
-        <h1>Aero Cat (ACAT)</h1>
-        <p>The Official Community Token on BSC</p>
-        <div class="address">0xf305Efbfc43134FB37cd8BB3D7868a5E68272316</div>
+
+    <div class="card">
+        <img src="https://raw.githubusercontent.com/aerocatofficial/aerocatofficial.github.io/main/Aero-Cat.svg" width="80">
+        <h1>EnAmor P2E</h1>
+        <p>Score 10 points to claim bonus!</p>
+        <button class="btn" onclick="startGame()">START MISSION</button>
+        <div id="score">Score: 0</div>
     </div>
+
+    <div id="game-container">
+        <img id="player" src="https://raw.githubusercontent.com/aerocatofficial/aerocatofficial.github.io/main/Aero-Cat.svg">
+    </div>
+
+    <script>
+        let player = document.getElementById('player');
+        let container = document.getElementById('game-container');
+        let scoreEl = document.getElementById('score');
+        let score = 0;
+        let playerY = 180;
+        let isGameOver = false;
+
+        function startGame() {
+            document.getElementById('game-container').style.display = 'block';
+            score = 0;
+            playerY = 180;
+            isGameOver = false;
+            scoreEl.innerText = "Score: 0";
+            requestAnimationFrame(gameLoop);
+            spawnObstacle();
+        }
+
+        // Jump Logic
+        window.onclick = () => { playerY -= 60; };
+
+        function gameLoop() {
+            if (isGameOver) return;
+            playerY += 3; // Gravity
+            player.style.top = playerY + 'px';
+
+            if (playerY > 360 || playerY < 0) endGame();
+            requestAnimationFrame(gameLoop);
+        }
+
+        function spawnObstacle() {
+            if (isGameOver) return;
+            let obstacle = document.createElement('div');
+            obstacle.classList.add('obstacle');
+            let h = Math.random() * 150 + 50;
+            obstacle.style.height = h + 'px';
+            obstacle.style.left = '320px';
+            container.appendChild(obstacle);
+
+            let moveLeft = setInterval(() => {
+                let x = parseInt(obstacle.style.left);
+                if (x < -40) {
+                    clearInterval(moveLeft);
+                    container.removeChild(obstacle);
+                    score++;
+                    scoreEl.innerText = "Score: " + score;
+                    if(score == 10) alert("Congrats! You won 100 EnAmor (Demo)");
+                }
+                obstacle.style.left = (x - 5) + 'px';
+
+                // Simple Collision
+                if (x < 90 && x > 50 && playerY > (400 - h - 40)) endGame();
+            }, 20);
+
+            setTimeout(spawnObstacle, 2000);
+        }
+
+        function endGame() {
+            isGameOver = true;
+            alert("Game Over! Try again.");
+            document.getElementById('game-container').style.display = 'none';
+        }
+    </script>
 </body>
 </html>
