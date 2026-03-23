@@ -12,12 +12,12 @@
         html, body { background: var(--bg); color: white; font-family: 'Poppins', sans-serif; overflow-x: hidden; width: 100%; scroll-behavior: smooth; }
 
         /* Sukuna Welcome Screen */
-        #welcome-screen { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; flex-direction: column; transition: opacity 1s ease-out; overflow: hidden; pointer-events: none; }
+        #welcome-screen { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; flex-direction: column; transition: opacity 0.8s ease-out; overflow: hidden; pointer-events: none; }
         .sukuna-gif { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; object-fit: cover; opacity: 0.6; z-index: -1; }
         .sukuna-text { font-family: 'Orbitron'; font-size: clamp(1.5rem, 5vw, 3rem); color: #ff003c; letter-spacing: 5px; animation: glitch 0.2s infinite; text-transform: uppercase; text-align: center; z-index: 1; text-shadow: 0 0 20px #ff003c; width: 90%; }
         @keyframes glitch { 0% { transform: translate(2px, 2px); } 50% { transform: translate(-2px, -2px); } 100% { transform: translate(0, 0); } }
 
-        /* Deep Void Background */
+        /* Background */
         .void { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -1; background: radial-gradient(circle at 50% 50%, #0a111a 0%, #010204 100%); }
         .stars { position: absolute; width: 200%; height: 200%; background: url('https://www.transparenttextures.com/patterns/stardust.png'); animation: spaceMove 150s linear infinite; opacity: 0.3; }
         @keyframes spaceMove { from { transform: translate(0,0); } to { transform: translate(-500px, -500px); } }
@@ -40,7 +40,7 @@
 
         h1 { font-family: 'Orbitron'; font-size: clamp(2rem, 8vw, 6rem); color: #fff; text-shadow: 0 0 20px var(--primary); letter-spacing: clamp(3px, 2vw, 10px); margin-bottom: 10px; width: 100%; word-wrap: break-word; line-height: 1.1; }
 
-        /* Updated Stats Grid */
+        /* Stats Grid */
         .grid-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; width: 100%; max-width: 1000px; margin-top: 40px; }
         .stat-card { background: rgba(255,255,255,0.01); border: 1px solid rgba(0,229,255,0.1); padding: 30px 20px; border-radius: 20px; backdrop-filter: blur(10px); transition: 0.4s; }
         .stat-card h3 { color: var(--primary); font-family: 'Orbitron'; margin-bottom: 15px; font-size: 1.1rem; letter-spacing: 1px; }
@@ -114,11 +114,12 @@
     <div class="creator-hint">ENAMOR</div>
 
     <script>
+        // Welcome Screen timer set to 2 seconds (2000ms)
         setTimeout(() => {
             const welcome = document.getElementById('welcome-screen');
             welcome.style.opacity = '0';
-            setTimeout(() => welcome.style.display = 'none', 1000);
-        }, 3500); 
+            setTimeout(() => welcome.style.display = 'none', 800);
+        }, 2000); 
 
         const observer = new IntersectionObserver((entries) => {
             entries.forEach((entry) => {
@@ -135,9 +136,7 @@
             let current = '';
             sections.forEach(section => {
                 const sectionTop = section.offsetTop;
-                if (pageYOffset >= sectionTop - 250) {
-                    current = section.getAttribute('id');
-                }
+                if (pageYOffset >= sectionTop - 250) current = section.getAttribute('id');
             });
             navLinks.forEach(link => {
                 link.classList.remove('active');
