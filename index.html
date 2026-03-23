@@ -3,114 +3,141 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aero Cat (ACAT) | Official Ecosystem</title>
+    <title>Aero Cat (ACAT) | Cinematic 3D</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;900&family=Poppins:wght@300;600&display=swap" rel="stylesheet">
     <style>
-        :root { --primary: #00e5ff; --bg: #020406; --glass: rgba(255, 255, 255, 0.02); }
+        :root { --primary: #00e5ff; --bg: #010204; --accent: rgba(0, 229, 255, 0.15); }
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { background: var(--bg); color: white; font-family: 'Poppins', sans-serif; overflow-x: hidden; }
+        body { background: var(--bg); color: white; font-family: 'Poppins', sans-serif; overflow-x: hidden; scroll-behavior: smooth; }
 
-        /* Background 3D Particles */
-        .bg-layer { position: fixed; width: 100%; height: 100%; z-index: -1; background: radial-gradient(circle at 50% 50%, #0a192f 0%, #020406 100%); }
-        .star { position: absolute; background: white; border-radius: 50%; opacity: 0.3; animation: blink 3s infinite; }
-        @keyframes blink { 0%, 100% { opacity: 0.3; } 50% { opacity: 0.8; } }
+        /* Animated Space Background */
+        .hero-bg { position: fixed; width: 100vw; height: 100vh; z-index: -1; background: #000; overflow: hidden; }
+        .stars { position: absolute; width: 100%; height: 100%; background: url('https://www.transparenttextures.com/patterns/stardust.png'); animation: spaceMove 100s linear infinite; }
+        @keyframes spaceMove { from { background-position: 0 0; } to { background-position: 1000px 1000px; } }
 
-        /* Welcome Section (PC & Mobile Optimized) */
-        .hero-section { height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px; }
-        
-        /* Anime Character Animation */
-        .anime-girl { width: 280px; filter: drop-shadow(0 0 20px var(--primary)); animation: greet 3s infinite ease-in-out; margin-bottom: 20px; }
-        @keyframes greet { 0%, 100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-10px) scale(1.02); } }
+        /* Cinematic Entrance */
+        .reveal-text { opacity: 0; transform: translateY(30px); animation: fadeInUp 1.5s forwards; }
+        @keyframes fadeInUp { to { opacity: 1; transform: translateY(0); } }
 
-        h1 { font-family: 'Orbitron', sans-serif; font-size: clamp(2.5rem, 8vw, 4.5rem); color: var(--primary); text-shadow: 0 0 20px rgba(0,229,255,0.5); margin: 10px 0; }
-        .welcome-msg { font-size: 1.2rem; opacity: 0.8; letter-spacing: 2px; }
-
-        /* Scroll Down Indicator */
-        .scroll-down { margin-top: 30px; animation: bounce 2s infinite; font-size: 1.5rem; color: var(--primary); }
-        @keyframes bounce { 0%, 20%, 50%, 80%, 100% { transform: translateY(0); } 40% { transform: translateY(-10px); } 60% { transform: translateY(-5px); } }
-
-        /* Content Section (Scroll Reveal) */
-        .content-wrap { max-width: 1000px; margin: 0 auto; padding: 100px 20px; display: flex; flex-wrap: wrap; gap: 40px; justify-content: center; align-items: center; }
-        
-        .card-3d { background: var(--glass); backdrop-filter: blur(20px); border: 1px solid rgba(0, 229, 255, 0.1); border-radius: 40px; padding: 40px; width: 100%; max-width: 500px; box-shadow: 0 40px 100px rgba(0,0,0,0.5); opacity: 0; transform: translateY(50px); transition: 1s all ease-out; }
-        .card-3d.reveal { opacity: 1; transform: translateY(0); }
-
-        .about-text { text-align: left; line-height: 1.8; font-size: 1.1rem; color: #cbd5e1; }
-        .about-text b { color: var(--primary); font-family: 'Orbitron', sans-serif; }
-
-        /* Stats Grid */
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 15px; margin-top: 30px; }
-        .stat-item { background: rgba(0,0,0,0.3); padding: 15px; border-radius: 20px; border: 1px solid rgba(0, 229, 255, 0.05); text-align: center; }
-        .stat-item span { display: block; font-size: 0.7rem; color: var(--primary); text-transform: uppercase; }
-        .stat-item p { font-weight: bold; font-family: 'Orbitron'; margin-top: 5px; }
-
-        .btn-main { display: inline-block; width: 100%; padding: 20px; background: var(--primary); color: #000; text-decoration: none; border-radius: 20px; font-weight: 900; margin-top: 30px; text-transform: uppercase; letter-spacing: 2px; box-shadow: 0 10px 30px rgba(0,229,255,0.3); transition: 0.3s; text-align: center; }
-        .btn-main:hover { transform: scale(1.05); box-shadow: 0 15px 40px rgba(0,229,255,0.5); }
-
-        @media (min-width: 1024px) {
-            .content-wrap { justify-content: space-between; flex-direction: row-reverse; }
-            .card-3d { max-width: 600px; }
-            .anime-girl { width: 400px; }
+        /* Giant 3D Floating & Rotating Logo */
+        .coin-wrap { perspective: 1500px; display: flex; justify-content: center; align-items: center; margin: 50px 0; }
+        .main-logo { 
+            width: clamp(280px, 35vw, 550px); 
+            filter: drop-shadow(0 0 40px var(--primary)); 
+            animation: majesticFloat 8s infinite ease-in-out, rotate3D 15s infinite linear; 
         }
+        @keyframes majesticFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-40px); } }
+        @keyframes rotate3D { from { transform: rotateY(0deg); } to { transform: rotateY(360deg); } }
+
+        /* Section Layouts */
+        .hero { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 100px 10%; }
+        
+        /* Animated Headlines */
+        h1 { 
+            font-family: 'Orbitron', sans-serif; 
+            font-size: clamp(3.5rem, 12vw, 8rem); 
+            background: linear-gradient(90deg, #fff, var(--primary), #fff); 
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: shine 3s linear infinite;
+        }
+        @keyframes shine { to { background-position: 200% center; } }
+
+        /* Anime Greet Girl (Namaste) */
+        .anime-hero { width: 350px; opacity: 0; animation: girlFade 2s forwards 1s; filter: drop-shadow(0 0 15px var(--primary)); }
+        @keyframes girlFade { from { opacity: 0; transform: translateX(50px); } to { opacity: 1; transform: translateX(0); } }
+
+        /* Information Grid with Hover Tilt */
+        .grid-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; padding: 100px 10%; }
+        .info-card { 
+            background: rgba(255,255,255,0.02); 
+            border: 1px solid var(--accent); 
+            padding: 50px; 
+            border-radius: 40px; 
+            backdrop-filter: blur(15px);
+            transition: 0.5s;
+            opacity: 0; transform: scale(0.9);
+        }
+        .info-card.active { opacity: 1; transform: scale(1); }
+        .info-card:hover { background: rgba(0, 229, 255, 0.05); border-color: var(--primary); transform: translateY(-20px); }
+
+        /* Mega Button with Pulse */
+        .mega-btn { 
+            padding: 25px 60px; 
+            background: var(--primary); 
+            color: #000; 
+            font-family: 'Orbitron'; 
+            font-weight: 900; 
+            border-radius: 100px; 
+            text-decoration: none; 
+            font-size: 1.5rem;
+            box-shadow: 0 0 20px var(--primary);
+            transition: 0.4s;
+            display: inline-block;
+            animation: pulseBtn 2s infinite;
+        }
+        @keyframes pulseBtn { 0% { box-shadow: 0 0 20px var(--primary); } 50% { box-shadow: 0 0 50px var(--primary); } 100% { box-shadow: 0 0 20px var(--primary); } }
+        .mega-btn:hover { transform: scale(1.1); letter-spacing: 5px; }
+
+        .desc-text { font-size: 1.4rem; line-height: 2; opacity: 0.7; margin: 40px 0; }
+
     </style>
 </head>
 <body>
 
-    <div class="bg-layer" id="stars"></div>
+    <div class="hero-bg">
+        <div class="stars"></div>
+    </div>
 
-    <section class="hero-section">
-        <img src="https://i.ibb.co/pPZ8YpL/anime-girl-namaste.png" alt="Welcome Anime" class="anime-girl">
-        <p class="welcome-msg">KON'NICHIWA! WELCOME TO</p>
-        <h1>Aero Cat</h1>
-        <div class="scroll-down"><i class="fas fa-chevron-down"></i></div>
-    </section>
-
-    <section class="content-wrap">
-        <div class="card-3d" id="mainCard">
-            <div class="about-text">
-                <b>PROJECT VISION</b><br>
-                Aero Cat (ACAT) is not just a token; it's a revolutionary anime-inspired ecosystem on the Binance Smart Chain. We merge the world of Japanese aesthetics with cutting-edge DeFi technology. <br><br>
-                Our community-driven approach ensures 100% transparency and zero-tax trading, making it the most efficient cat-themed asset for global investors.
-            </div>
-
-            <div class="stats-grid">
-                <div class="stat-item"><span>Supply</span><p>20M</p></div>
-                <div class="stat-item"><span>Tax</span><p>0%</p></div>
-                <div class="stat-item"><span>Network</span><p>BSC</p></div>
-            </div>
-
-            <a href="https://bscscan.com/token/0xf305Efbfc43134FB37cd8BB3D7868a5E68272316" class="btn-main">Launch on BscScan</a>
+    <section class="hero">
+        <div class="reveal-text">
+            <p style="letter-spacing: 10px; color: var(--primary); font-weight: bold;">PROJECT CATALIST</p>
+            <h1>AERO CAT</h1>
         </div>
+
+        <div class="coin-wrap reveal-text" style="animation-delay: 0.5s;">
+            <img src="https://raw.githubusercontent.com/aerocatofficial/aerocatofficial.github.io/main/Aero-Cat.svg" class="main-logo">
+        </div>
+
+        <img src="https://cdn.pixabay.com/photo/2023/09/05/16/39/anime-8235471_1280.png" class="anime-hero">
         
-        <div style="max-width: 300px; color: var(--primary); font-family: 'Orbitron'; font-size: 1.5rem; text-align: left;" class="card-3d" id="sideText">
-            DECENTRALIZED.<br>COMMUNITY OWNED.<br>ANIME REVOLUTION.
+        <div class="reveal-text" style="animation-delay: 1s;">
+            <p class="desc-text">The fusion of <b>Advanced DeFi</b> and <b>Anime Aesthetics</b>. <br> Built for the next generation of crypto enthusiasts.</p>
+            <a href="https://bscscan.com/token/0xf305Efbfc43134FB37cd8BB3D7868a5E68272316" class="mega-btn">ENTER CONTRACT</a>
         </div>
     </section>
+
+    <div class="grid-container">
+        <div class="info-card">
+            <h2 style="color: var(--primary); font-family: 'Orbitron'; margin-bottom: 20px;">TOKENOMICS</h2>
+            <p style="font-size: 1.2rem; line-height: 1.8;">Total Supply: 20,000,000 ACAT<br>Tax: 0% Buy / 0% Sell<br>Liquidity: Burnt & Locked Forever.</p>
+        </div>
+        <div class="info-card">
+            <h2 style="color: var(--primary); font-family: 'Orbitron'; margin-bottom: 20px;">VISION</h2>
+            <p style="font-size: 1.2rem; line-height: 1.8;">Building a decentralized anime empire where every holder wins. No rug, no owner, 100% community power.</p>
+        </div>
+    </div>
 
     <script>
-        // Star Background Creation
-        const starsContainer = document.getElementById('stars');
-        for (let i = 0; i < 100; i++) {
-            const star = document.createElement('div');
-            star.className = 'star';
-            star.style.width = Math.random() * 3 + 'px';
-            star.style.height = star.style.width;
-            star.style.top = Math.random() * 100 + '%';
-            star.style.left = Math.random() * 100 + '%';
-            star.style.animationDelay = Math.random() * 5 + 's';
-            starsContainer.appendChild(star);
-        }
-
-        // Scroll Reveal Animation
+        // Scroll Reveal Logic for Cards
         window.addEventListener('scroll', () => {
-            const cards = document.querySelectorAll('.card-3d');
+            const cards = document.querySelectorAll('.info-card');
             cards.forEach(card => {
-                const cardTop = card.getBoundingClientRect().top;
-                if (cardTop < window.innerHeight - 100) {
-                    card.classList.add('reveal');
+                const pos = card.getBoundingClientRect().top;
+                if (pos < window.innerHeight - 100) {
+                    card.classList.add('active');
                 }
             });
+        });
+
+        // Mouse Move Tilt Effect for Logo
+        document.addEventListener('mousemove', (e) => {
+            const logo = document.querySelector('.main-logo');
+            let x = (window.innerWidth / 2 - e.pageX) / 25;
+            let y = (window.innerHeight / 2 - e.pageY) / 25;
+            logo.style.transform = `rotateY(${x}deg) rotateX(${y}deg)`;
         });
     </script>
 </body>
