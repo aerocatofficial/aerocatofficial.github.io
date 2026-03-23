@@ -3,42 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aero Cat | 4-Page Cinematic Ecosystem</title>
+    <title>Aero Cat | Majestic 4-Page Cinematic Ecosystem</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;900&family=Poppins:wght@300;600&display=swap" rel="stylesheet">
     <style>
-        :root { --primary: #00e5ff; --bg: #010204; --glass: rgba(0, 229, 255, 0.05); --red: #ff003c; }
+        :root { --primary: #00e5ff; --primary-glow: rgba(0, 229, 255, 0.4); --bg: #010204; --glass: rgba(255, 255, 255, 0.05); }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { background: var(--bg); color: white; font-family: 'Poppins', sans-serif; overflow-x: hidden; scroll-behavior: smooth; }
 
-        /* --- 1. THE CINEMATIC OPENING SEQUENCE --- */
+        /* --- 1. THE CINEMATIC OPENING CONTAINER --- */
         #cinematic-container { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; overflow: hidden; }
 
-        /* Scene 1: Eyes */
-        .eyes-box { display: flex; gap: 100px; opacity: 0; animation: eyesSequence 3s forwards; }
-        .eye { width: 150px; height: 60px; background: #000; border: 4px solid var(--primary); border-radius: 50% 50% 0 0; position: relative; overflow: hidden; box-shadow: 0 0 30px var(--primary); }
-        .eye::after { content: ''; position: absolute; top: 10px; left: 50%; transform: translateX(-50%); width: 40px; height: 40px; background: var(--primary); border-radius: 50%; filter: blur(5px); }
+        /* Scene 1: The REAL Anime Eyes Staredown (Aapki Image) */
+        .eyes-scene { position: absolute; width: 100vw; height: 100vh; display: flex; justify-content: center; align-items: center; opacity: 0; animation: realEyesSeq 4.5s forwards; }
+        .real-eyes { width: 100%; max-width: 800px; object-fit: cover; animation: intenseStareDown 4.5s forwards; mix-blend-mode: screen; }
         
-        @keyframes eyesSequence { 0% { opacity: 0; transform: scale(0.5); } 20% { opacity: 1; transform: scale(1); } 80% { opacity: 1; } 100% { opacity: 0; display: none; } }
+        /* Eyes fade, blink (intense zoom/brighten) and staredown user */
+        @keyframes realEyesSeq { 0% { opacity: 0; } 5% { opacity: 1; } 90% { opacity: 1; } 100% { opacity: 0; visibility: hidden; display: none; } }
+        @keyframes intenseStareDown { 0% { transform: scale(1); filter: brightness(0.5); } 100% { transform: scale(1.25); filter: brightness(1.3) drop-shadow(0 0 50px var(--primary)); } }
 
         /* Scene 2: Cat & Welcome */
-        .cat-scene { position: absolute; opacity: 0; animation: catWelcomeSequence 4s forwards 3s; text-align: center; }
-        .anime-cat { width: 300px; filter: drop-shadow(0 0 20px var(--primary)); animation: catSwipe 1s forwards; }
-        @keyframes catSwipe { from { transform: translateX(100vw) rotate(20deg); } to { transform: translateX(-20vw) rotate(0deg); } }
-        .welcome-text { font-family: 'Orbitron'; font-size: 4rem; color: #fff; text-shadow: 0 0 20px var(--primary); letter-spacing: 15px; margin-top: 20px; opacity: 0; animation: fadeIn 1s forwards 1s; }
+        .cat-scene { position: absolute; opacity: 0; animation: catWelcomeSequence 4s forwards 4.5s; text-align: center; }
+        .anime-cat { width: 300px; filter: drop-shadow(0 0 20px var(--primary)); animation: catJumpSwipeRightToLeft 1.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        @keyframes catJumpSwipeRightToLeft { from { transform: translateX(100vw) translateY(50px) rotate(20deg); } to { transform: translateX(-20vw) translateY(0) rotate(0deg); } }
+        .welcome-text { font-family: 'Orbitron'; font-size: 4rem; color: #fff; text-shadow: 0 0 20px var(--primary); letter-spacing: 15px; margin-top: 20px; opacity: 0; animation: fadeInWelcomeText 1s forwards 1s; }
 
         @keyframes catWelcomeSequence { 0% { opacity: 1; } 80% { opacity: 1; } 100% { opacity: 0; display: none; } }
-        @keyframes fadeIn { to { opacity: 1; } }
+        @keyframes fadeInWelcomeText { to { opacity: 1; } }
 
-        /* Scene 3: Logo Transition */
-        .logo-transition { position: absolute; opacity: 0; animation: logoSequence 4s forwards 7s; display: flex; flex-direction: column; align-items: center; }
-        .trans-logo { width: 100vw; max-width: 800px; filter: drop-shadow(0 0 50px var(--primary)); animation: shrinkLogo 2s forwards; }
-        @keyframes shrinkLogo { from { transform: scale(1); } to { transform: scale(0.3) translateY(-150vh); } }
+        /* Scene 3: Logo Transition (Giant -> Shrink) */
+        .logo-transition { position: absolute; opacity: 0; animation: logoSequence 4s forwards 8.5s; display: flex; flex-direction: column; align-items: center; }
+        .trans-logo { width: 100vw; max-width: 800px; filter: drop-shadow(0 0 50px var(--primary)); animation: shrinkLogoToTopCenter 2s forwards; }
+        @keyframes shrinkLogoToTopCenter { from { transform: scale(1); } to { transform: scale(0.3) translateY(-150vh); } }
 
         @keyframes logoSequence { 0% { opacity: 1; } 90% { opacity: 1; } 100% { opacity: 0; visibility: hidden; } }
 
-        /* --- END OPENING --- */
+        /* --- END OPENING SEQUENCE --- */
 
-        /* Void Background */
+        /* Deep Space Void */
         .void { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -1; background: radial-gradient(circle at 50% 50%, #0a111a 0%, #010204 100%); }
         .stars { position: absolute; width: 200%; height: 200%; background: url('https://www.transparenttextures.com/patterns/stardust.png'); animation: spaceMove 150s linear infinite; opacity: 0.3; }
         @keyframes spaceMove { from { transform: translate(0,0); } to { transform: translate(-500px, -500px); } }
@@ -57,20 +58,20 @@
         .delay-1 { transition-delay: 0.2s; }
         .delay-2 { transition-delay: 0.4s; }
 
-        /* Home Page Layout (Sequence End State) */
+        /* Home Page Layout (Sequence Final State) */
         .final-logo-box { perspective: 1000px; margin-bottom: 20px; margin-top: -50px; }
-        .final-logo { width: 200px; filter: drop-shadow(0 0 30px var(--primary)); animation: float 6s infinite ease-in-out; }
-        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
+        .final-logo { width: 200px; filter: drop-shadow(0 0 30px var(--primary)); animation: floatLogoMajestic 6s infinite ease-in-out; }
+        @keyframes floatLogoMajestic { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
 
-        h1 { font-family: 'Orbitron'; font-size: clamp(3.5rem, 10vw, 7rem); color: #fff; text-shadow: 0 0 30px var(--primary); letter-spacing: 12px; margin-bottom: 5px; animation: textShine 4s linear infinite; background: linear-gradient(90deg, #fff, var(--primary), #fff); background-size: 200% auto; -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        @keyframes textShine { to { background-position: 200% center; } }
+        h1 { font-family: 'Orbitron'; font-size: clamp(3.5rem, 10vw, 7rem); color: #fff; text-shadow: 0 0 30px var(--primary); letter-spacing: 12px; margin-bottom: 5px; animation: silverShineAnimation 4s linear infinite; background: linear-gradient(90deg, #fff, var(--primary), #fff); background-size: 200% auto; -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        @keyframes silverShineAnimation { to { background-position: 200% center; } }
 
-        .sub-punch { letter-spacing: 8px; color: var(--primary); font-size: 1.2rem; text-transform: uppercase; animation: textGlow 2s infinite alternate; }
-        @keyframes textGlow { from { text-shadow: 0 0 5px var(--primary); } to { text-shadow: 0 0 20px var(--primary); } }
+        .sub-punch { letter-spacing: 8px; color: var(--primary); font-size: 1.2rem; text-transform: uppercase; animation: cyanGlowTextPulsing 2s infinite alternate; }
+        @keyframes cyanGlowTextPulsing { from { text-shadow: 0 0 5px var(--primary); } to { text-shadow: 0 0 20px var(--primary); } }
 
         /* Scroll Indicator */
-        .scroll-down { position: absolute; bottom: 40px; color: var(--primary); font-size: 2rem; animation: bounce 2s infinite; opacity: 0.5; }
-        @keyframes bounce { 0%, 20%, 50%, 80%, 100% { transform: translateY(0); } 40% { transform: translateY(-15px); } 60% { transform: translateY(-7px); } }
+        .scroll-down { position: absolute; bottom: 40px; color: var(--primary); font-size: 2rem; animation: bounceIndicatorMajestic 2s infinite; opacity: 0.5; }
+        @keyframes bounceIndicatorMajestic { 0%, 20%, 50%, 80%, 100% { transform: translateY(0); } 40% { transform: translateY(-15px); } 60% { transform: translateY(-7px); } }
 
         /* Stats Grid */
         .grid-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 30px; width: 100%; max-width: 1100px; }
@@ -83,8 +84,8 @@
         .desc-text { font-size: 1.5rem; line-height: 2.2; opacity: 0.7; max-width: 900px; margin: 0 auto; color: #b0c4de; }
 
         /* Execute Button */
-        .btn-trade { display: inline-block; padding: 25px 70px; background: var(--primary); color: #000; font-family: 'Orbitron'; font-weight: 900; border-radius: 100px; text-decoration: none; font-size: 1.5rem; letter-spacing: 3px; box-shadow: 0 0 40px rgba(0,229,255,0.3); transition: 0.4s; margin-top: 50px; animation: pulseBtn 2s infinite; }
-        @keyframes pulseBtn { 0% { box-shadow: 0 0 20px var(--primary); } 50% { box-shadow: 0 0 60px var(--primary); } 100% { box-shadow: 0 0 20px var(--primary); } }
+        .btn-trade { display: inline-block; padding: 25px 70px; background: var(--primary); color: #000; font-family: 'Orbitron'; font-weight: 900; border-radius: 100px; text-decoration: none; font-size: 1.5rem; letter-spacing: 3px; box-shadow: 0 0 40px rgba(0,229,255,0.3); transition: 0.4s; margin-top: 50px; animation: megaPulseBtnMajestic 2s infinite; }
+        @keyframes megaPulseBtnMajestic { 0% { box-shadow: 0 0 20px var(--primary); } 50% { box-shadow: 0 0 60px var(--primary); } 100% { box-shadow: 0 0 20px var(--primary); } }
         .btn-trade:hover { transform: scale(1.1); background: #fff; }
 
         .creator-hint { position: fixed; bottom: 15px; right: 20px; font-size: 0.7rem; opacity: 0.2; letter-spacing: 5px; z-index: 100; transition: 0.5s; }
@@ -94,9 +95,9 @@
 <body>
 
     <div id="cinematic-container">
-        <div class="eyes-box">
-            <div class="eye"></div>
-            <div class="eye"></div>
+        
+        <div class="eyes-scene">
+            <img src="https://raw.githubusercontent.com/aerocatofficial/aerocatofficial.github.io/main/eyes.png" alt="awakening" class="real-eyes">
         </div>
         
         <div class="cat-scene">
@@ -141,7 +142,7 @@
         <h1 class="hidden" style="font-size: 5rem; margin-bottom: 40px;">OUR LEGACY</h1>
         <p class="desc-text hidden delay-1">
             Aero Cat is not just a token; it is an unstoppable movement. <br><br>
-            Built on the Binance Smart Chain, it merges the relentless power of Anime with the absolute financial freedom of DeFi. We operate in the shadows, creating wealth for the true believers. No false promises, just raw code and a decentralized empire.
+            Built on the Binance Smart Chain, it merges the relentless power of Anime with the financial freedom of DeFi. We operate in the shadows, creating wealth for the true believers. No false promises, just raw code and a decentralized empire.
         </p>
     </section>
 
@@ -156,14 +157,14 @@
     <div class="creator-hint">ENAMOR</div>
 
     <script>
-        // Opening Sequence Cleanup
+        // Opening Sequence Cleanup (Hide after 12.5 seconds total)
         setTimeout(() => {
             const container = document.getElementById('cinematic-container');
             container.style.opacity = '0';
             setTimeout(() => container.style.display = 'none', 1000);
-        }, 11000); // 11 seconds total for the sequence
+        }, 12500); // 12.5 seconds total cinematic duration
 
-        // Cinematic Scroll Reveal Logic
+        // Cinematic Scroll Reveal Logic (Observer)
         const observer = new IntersectionObserver((entries) => {
             entries.forEach((entry) => {
                 if (entry.isIntersecting) {
