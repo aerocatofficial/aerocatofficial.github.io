@@ -3,207 +3,152 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aero Cat | Majestic 4-Page Cinematic Ecosystem</title>
+    <title>Aero Cat (ACAT) | Majestic 3D Ecosystem</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;900&family=Poppins:wght@300;600&display=swap" rel="stylesheet">
     <style>
-        :root { --primary: #00e5ff; --primary-glow: rgba(0, 229, 255, 0.4); --bg: #010204; --glass: rgba(255, 255, 255, 0.05); }
+        :root { --primary: #00e5ff; --primary-glow: rgba(0, 229, 255, 0.4); --bg: #010204; --accent: rgba(0, 229, 255, 0.1); }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { background: var(--bg); color: white; font-family: 'Poppins', sans-serif; overflow-x: hidden; scroll-behavior: smooth; }
 
-        /* --- 1. THE CINEMATIC OPENING CONTAINER --- */
-        #cinematic-container { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-
-        /* Scene 1: The REAL Anime Eyes Staredown (Aapki Image) */
-        .eyes-scene { position: absolute; width: 100vw; height: 100vh; display: flex; justify-content: center; align-items: center; opacity: 0; animation: realEyesSeq 4.5s forwards; }
-        .real-eyes { width: 100%; max-width: 800px; object-fit: cover; animation: intenseStareDown 4.5s forwards; mix-blend-mode: screen; }
-        
-        /* Eyes fade, blink (intense zoom/brighten) and staredown user */
-        @keyframes realEyesSeq { 0% { opacity: 0; } 5% { opacity: 1; } 90% { opacity: 1; } 100% { opacity: 0; visibility: hidden; display: none; } }
-        @keyframes intenseStareDown { 0% { transform: scale(1); filter: brightness(0.5); } 100% { transform: scale(1.25); filter: brightness(1.3) drop-shadow(0 0 50px var(--primary)); } }
-
-        /* Scene 2: Cat & Welcome */
-        .cat-scene { position: absolute; opacity: 0; animation: catWelcomeSequence 4s forwards 4.5s; text-align: center; }
-        .anime-cat { width: 300px; filter: drop-shadow(0 0 20px var(--primary)); animation: catJumpSwipeRightToLeft 1.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
-        @keyframes catJumpSwipeRightToLeft { from { transform: translateX(100vw) translateY(50px) rotate(20deg); } to { transform: translateX(-20vw) translateY(0) rotate(0deg); } }
-        .welcome-text { font-family: 'Orbitron'; font-size: 4rem; color: #fff; text-shadow: 0 0 20px var(--primary); letter-spacing: 15px; margin-top: 20px; opacity: 0; animation: fadeInWelcomeText 1s forwards 1s; }
-
-        @keyframes catWelcomeSequence { 0% { opacity: 1; } 80% { opacity: 1; } 100% { opacity: 0; display: none; } }
-        @keyframes fadeInWelcomeText { to { opacity: 1; } }
-
-        /* Scene 3: Logo Transition (Giant -> Shrink) */
-        .logo-transition { position: absolute; opacity: 0; animation: logoSequence 4s forwards 8.5s; display: flex; flex-direction: column; align-items: center; }
-        .trans-logo { width: 100vw; max-width: 800px; filter: drop-shadow(0 0 50px var(--primary)); animation: shrinkLogoToTopCenter 2s forwards; }
-        @keyframes shrinkLogoToTopCenter { from { transform: scale(1); } to { transform: scale(0.3) translateY(-150vh); } }
-
-        @keyframes logoSequence { 0% { opacity: 1; } 90% { opacity: 1; } 100% { opacity: 0; visibility: hidden; } }
-
-        /* --- END OPENING SEQUENCE --- */
-
-        /* Deep Space Void */
-        .void { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -1; background: radial-gradient(circle at 50% 50%, #0a111a 0%, #010204 100%); }
-        .stars { position: absolute; width: 200%; height: 200%; background: url('https://www.transparenttextures.com/patterns/stardust.png'); animation: spaceMove 150s linear infinite; opacity: 0.3; }
+        /* Cinematic Background with Moving Space Dust */
+        .hero-bg { position: fixed; width: 100vw; height: 100vh; z-index: -1; background: radial-gradient(circle at 50% 50%, #0a111a 0%, #010204 100%); overflow: hidden; }
+        .stars { position: absolute; width: 200%; height: 200%; background: url('https://www.transparenttextures.com/patterns/stardust.png'); animation: spaceMove 120s linear infinite; opacity: 0.4; }
         @keyframes spaceMove { from { transform: translate(0,0); } to { transform: translate(-500px, -500px); } }
 
-        /* Floating Nav Bar */
-        nav { position: fixed; top: 0; width: 100%; padding: 20px; background: rgba(1, 2, 4, 0.8); backdrop-filter: blur(15px); z-index: 100; display: flex; justify-content: center; gap: 40px; border-bottom: 1px solid rgba(0,229,255,0.1); }
-        .nav-link { color: white; text-decoration: none; font-family: 'Orbitron'; font-size: 1rem; letter-spacing: 3px; cursor: pointer; transition: 0.4s; padding: 10px 20px; border-radius: 10px; opacity: 0.5; }
-        .nav-link:hover, .nav-link.active { background: var(--glass); color: var(--primary); opacity: 1; text-shadow: 0 0 10px var(--primary); }
-
-        /* Scroll Sections */
-        .section { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 100px 20px; position: relative; }
+        /* Main Hero Section */
+        .hero { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 80px 10%; position: relative; }
         
-        /* PREMIUM SCROLL ANIMATIONS */
-        .hidden { opacity: 0; filter: blur(15px); transform: translateY(80px) scale(0.9); transition: all 1.2s cubic-bezier(0.25, 1, 0.5, 1); }
-        .show { opacity: 1; filter: blur(0); transform: translateY(0) scale(1); }
-        .delay-1 { transition-delay: 0.2s; }
-        .delay-2 { transition-delay: 0.4s; }
+        /* Interactive 3D Giant Logo */
+        .coin-wrap { perspective: 2000px; margin: 40px 0; z-index: 10; }
+        .main-logo { 
+            width: clamp(280px, 35vw, 550px); 
+            filter: drop-shadow(0 0 50px var(--primary-glow)); 
+            animation: majesticFloat 6s infinite ease-in-out;
+            transition: 0.1s ease-out;
+            cursor: pointer;
+        }
+        @keyframes majesticFloat { 0%, 100% { transform: translateY(0) rotateY(0deg); } 50% { transform: translateY(-30px) rotateY(10deg); } }
 
-        /* Home Page Layout (Sequence Final State) */
-        .final-logo-box { perspective: 1000px; margin-bottom: 20px; margin-top: -50px; }
-        .final-logo { width: 200px; filter: drop-shadow(0 0 30px var(--primary)); animation: floatLogoMajestic 6s infinite ease-in-out; }
-        @keyframes floatLogoMajestic { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
+        /* Cinematic Headlines */
+        h1 { 
+            font-family: 'Orbitron', sans-serif; 
+            font-size: clamp(3.5rem, 12vw, 9rem); 
+            background: linear-gradient(90deg, #fff, var(--primary), #fff); 
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: textShine 4s linear infinite;
+            letter-spacing: 5px;
+            margin-bottom: 20px;
+        }
+        @keyframes textShine { to { background-position: 200% center; } }
 
-        h1 { font-family: 'Orbitron'; font-size: clamp(3.5rem, 10vw, 7rem); color: #fff; text-shadow: 0 0 30px var(--primary); letter-spacing: 12px; margin-bottom: 5px; animation: silverShineAnimation 4s linear infinite; background: linear-gradient(90deg, #fff, var(--primary), #fff); background-size: 200% auto; -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        @keyframes silverShineAnimation { to { background-position: 200% center; } }
+        /* Stats & Info Cards (3D Tilt Effect on Hover) */
+        .grid-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 40px; padding: 100px 10%; position: relative; z-index: 5; }
+        .info-card { 
+            background: rgba(255,255,255,0.02); 
+            border: 1px solid var(--accent); 
+            padding: 60px 40px; 
+            border-radius: 50px; 
+            backdrop-filter: blur(20px);
+            width: 100%; max-width: 500px;
+            transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            opacity: 0; transform: translateY(50px);
+        }
+        .info-card.active { opacity: 1; transform: translateY(0); }
+        .info-card:hover { border-color: var(--primary); background: rgba(0, 229, 255, 0.05); transform: translateY(-15px) scale(1.02); box-shadow: 0 30px 60px rgba(0,0,0,0.5); }
 
-        .sub-punch { letter-spacing: 8px; color: var(--primary); font-size: 1.2rem; text-transform: uppercase; animation: cyanGlowTextPulsing 2s infinite alternate; }
-        @keyframes cyanGlowTextPulsing { from { text-shadow: 0 0 5px var(--primary); } to { text-shadow: 0 0 20px var(--primary); } }
+        /* Mega Pulse Button */
+        .mega-btn { 
+            padding: 25px 80px; 
+            background: var(--primary); 
+            color: #000; 
+            font-family: 'Orbitron'; 
+            font-weight: 900; 
+            border-radius: 100px; 
+            text-decoration: none; 
+            font-size: 1.5rem;
+            margin-top: 40px;
+            box-shadow: 0 0 30px var(--primary-glow);
+            transition: 0.4s;
+            display: inline-block;
+            animation: buttonPulse 2s infinite;
+        }
+        @keyframes buttonPulse { 0% { box-shadow: 0 0 20px var(--primary); } 50% { box-shadow: 0 0 50px var(--primary); } 100% { box-shadow: 0 0 20px var(--primary); } }
+        .mega-btn:hover { transform: scale(1.1); letter-spacing: 5px; background: #fff; }
 
-        /* Scroll Indicator */
-        .scroll-down { position: absolute; bottom: 40px; color: var(--primary); font-size: 2rem; animation: bounceIndicatorMajestic 2s infinite; opacity: 0.5; }
-        @keyframes bounceIndicatorMajestic { 0%, 20%, 50%, 80%, 100% { transform: translateY(0); } 40% { transform: translateY(-15px); } 60% { transform: translateY(-7px); } }
+        .desc-text { font-size: 1.4rem; line-height: 2; opacity: 0.7; margin: 40px auto; max-width: 800px; }
+        
+        /* Secret Creator Hint */
+        .creator-secret { position: fixed; bottom: 20px; left: 20px; font-size: 0.6rem; opacity: 0.1; letter-spacing: 3px; z-index: 100; transition: 0.5s; }
+        .creator-secret:hover { opacity: 1; color: var(--primary); }
 
-        /* Stats Grid */
-        .grid-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 30px; width: 100%; max-width: 1100px; }
-        .stat-card { background: rgba(255,255,255,0.01); border: 1px solid rgba(0,229,255,0.1); padding: 50px 30px; border-radius: 30px; backdrop-filter: blur(10px); transition: 0.4s; }
-        .stat-card:hover { transform: translateY(-15px); border-color: var(--primary); box-shadow: 0 20px 40px rgba(0,229,255,0.1); background: rgba(0,229,255,0.03); }
-        .stat-card h3 { color: var(--primary); font-family: 'Orbitron'; margin-bottom: 20px; font-size: 1.5rem; letter-spacing: 2px; }
-        .stat-card p { font-size: 1.4rem; font-weight: bold; }
-
-        /* Vision Paragraph */
-        .desc-text { font-size: 1.5rem; line-height: 2.2; opacity: 0.7; max-width: 900px; margin: 0 auto; color: #b0c4de; }
-
-        /* Execute Button */
-        .btn-trade { display: inline-block; padding: 25px 70px; background: var(--primary); color: #000; font-family: 'Orbitron'; font-weight: 900; border-radius: 100px; text-decoration: none; font-size: 1.5rem; letter-spacing: 3px; box-shadow: 0 0 40px rgba(0,229,255,0.3); transition: 0.4s; margin-top: 50px; animation: megaPulseBtnMajestic 2s infinite; }
-        @keyframes megaPulseBtnMajestic { 0% { box-shadow: 0 0 20px var(--primary); } 50% { box-shadow: 0 0 60px var(--primary); } 100% { box-shadow: 0 0 20px var(--primary); } }
-        .btn-trade:hover { transform: scale(1.1); background: #fff; }
-
-        .creator-hint { position: fixed; bottom: 15px; right: 20px; font-size: 0.7rem; opacity: 0.2; letter-spacing: 5px; z-index: 100; transition: 0.5s; }
-        .creator-hint:hover { opacity: 1; color: var(--primary); }
+        /* Desktop vs Mobile Adjustments */
+        @media (max-width: 1024px) {
+            .grid-container { padding: 50px 5%; }
+            .info-card { padding: 40px 25px; }
+            h1 { font-size: 4rem; }
+        }
     </style>
 </head>
 <body>
 
-    <div id="cinematic-container">
-        
-        <div class="eyes-scene">
-            <img src="https://raw.githubusercontent.com/aerocatofficial/aerocatofficial.github.io/main/eyes.png" alt="awakening" class="real-eyes">
-        </div>
-        
-        <div class="cat-scene">
-            <img src="https://raw.githubusercontent.com/aerocatofficial/aerocatofficial.github.io/main/Aero-Cat.svg" class="anime-cat">
-            <div class="welcome-text">WELCOME</div>
+    <div class="hero-bg"><div class="stars"></div></div>
+
+    <section class="hero">
+        <div class="reveal">
+            <p style="letter-spacing: 12px; color: var(--primary); font-weight: bold; margin-bottom: 10px;">MAJESTIC 3D ECOSYSTEM</p>
+            <h1>AERO CAT</h1>
         </div>
 
-        <div class="logo-transition">
-            <img src="https://raw.githubusercontent.com/aerocatofficial/aerocatofficial.github.io/main/Aero-Cat.svg" class="trans-logo">
+        <div class="coin-wrap">
+            <img src="https://raw.githubusercontent.com/aerocatofficial/aerocatofficial.github.io/main/Aero-Cat.svg" class="main-logo" id="logo3d">
+        </div>
+
+        <div class="reveal">
+            <p class="desc-text">The world's first high-performance <b>Anime-Integrated</b> token on the Binance Smart Chain. Transparency is our core foundation.</p>
+            <a href="https://bscscan.com/token/0xf305Efbfc43134FB37cd8BB3D7868a5E68272316" class="mega-btn">EXECUTE CONTRACT</a>
+        </div>
+    </section>
+
+    <div class="grid-container">
+        <div class="info-card">
+            <h2 style="color: var(--primary); font-family: 'Orbitron'; margin-bottom: 25px; font-size: 2rem;">TOKENOMICS</h2>
+            <p style="font-size: 1.3rem; line-height: 2; opacity: 0.8;">Total Supply: <b>20,000,000 ACAT</b><br>Tax: <b>0% Buy / Sell</b><br>Security: <b>Liquidity Locked</b><br>Ownership: <b>Renounced</b></p>
+        </div>
+        <div class="info-card">
+            <h2 style="color: var(--primary); font-family: 'Orbitron'; margin-bottom: 25px; font-size: 2rem;">OUR LEGACY</h2>
+            <p style="font-size: 1.3rem; line-height: 2; opacity: 0.8;">Building a community-owned anime empire on the Binance Smart Chain. Decentralized power meets ultimate transparency. Join the revolution today.</p>
         </div>
     </div>
 
-    <div class="void"><div class="stars"></div></div>
-
-    <nav>
-        <a href="#home" class="nav-link active" data-target="home">HOME</a>
-        <a href="#tokenomics" class="nav-link" data-target="tokenomics">TOKENOMICS</a>
-        <a href="#vision" class="nav-link" data-target="vision">VISION</a>
-        <a href="#portal" class="nav-link" data-target="portal">PORTAL</a>
-    </nav>
-
-    <section id="home" class="section">
-        <div class="final-logo-box hidden">
-            <img src="https://raw.githubusercontent.com/aerocatofficial/aerocatofficial.github.io/main/Aero-Cat.svg" class="final-logo" id="acat-logo">
-        </div>
-        <h1 class="hidden delay-1">AERO CAT</h1>
-        <p class="hidden delay-2 sub-punch">The Ultimate DeFi Weapon</p>
-        <div class="scroll-down">↓</div>
-    </section>
-
-    <section id="tokenomics" class="section">
-        <h1 class="hidden" style="font-size: 4rem; margin-bottom: 60px;">SUPPLY & STATS</h1>
-        <div class="grid-container">
-            <div class="stat-card hidden delay-1"><h3>TOTAL SUPPLY</h3><p>20,000,000 ACAT</p></div>
-            <div class="stat-card hidden delay-2"><h3>TAX STRUCTURE</h3><p>0% BUY / 0% SELL</p></div>
-            <div class="stat-card hidden delay-1"><h3>LIQUIDITY</h3><p>100% LOCKED</p></div>
-            <div class="stat-card hidden delay-2"><h3>OWNERSHIP</h3><p>RENOUNCED</p></div>
-        </div>
-    </section>
-
-    <section id="vision" class="section">
-        <h1 class="hidden" style="font-size: 5rem; margin-bottom: 40px;">OUR LEGACY</h1>
-        <p class="desc-text hidden delay-1">
-            Aero Cat is not just a token; it is an unstoppable movement. <br><br>
-            Built on the Binance Smart Chain, it merges the relentless power of Anime with the financial freedom of DeFi. We operate in the shadows, creating wealth for the true believers. No false promises, just raw code and a decentralized empire.
-        </p>
-    </section>
-
-    <section id="portal" class="section">
-        <h1 class="hidden" style="font-size: 6rem; margin-bottom: 20px;">EXECUTE</h1>
-        <p class="desc-text hidden delay-1" style="font-size: 1.5rem;">Enter the contract. Join the revolution. No mercy.</p>
-        <div class="hidden delay-2">
-            <a href="https://bscscan.com/token/0xf305Efbfc43134FB37cd8BB3D7868a5E68272316" class="btn-trade">VIEW ON BSCSCAN</a>
-        </div>
-    </section>
-
-    <div class="creator-hint">ENAMOR</div>
+    <div class="creator-secret">CREATED BY ENAMOR</div>
 
     <script>
-        // Opening Sequence Cleanup (Hide after 12.5 seconds total)
-        setTimeout(() => {
-            const container = document.getElementById('cinematic-container');
-            container.style.opacity = '0';
-            setTimeout(() => container.style.display = 'none', 1000);
-        }, 12500); // 12.5 seconds total cinematic duration
-
-        // Cinematic Scroll Reveal Logic (Observer)
+        // Cinematic Scroll Reveal Logic
+        const observerOptions = { threshold: 0.2 };
         const observer = new IntersectionObserver((entries) => {
-            entries.forEach((entry) => {
+            entries.forEach(entry => {
                 if (entry.isIntersecting) {
-                    entry.target.classList.add('show');
+                    entry.target.classList.add('active');
                 }
             });
-        }, { threshold: 0.15 });
+        }, observerOptions);
 
-        document.querySelectorAll('.hidden').forEach((el) => observer.observe(el));
+        document.querySelectorAll('.info-card').forEach(card => observer.observe(card));
 
-        // Update Active Nav Link on Scroll
-        const sections = document.querySelectorAll('.section');
-        const navLinks = document.querySelectorAll('.nav-link');
-
-        window.addEventListener('scroll', () => {
-            let current = '';
-            sections.forEach(section => {
-                const sectionTop = section.offsetTop;
-                if (pageYOffset >= sectionTop - 200) {
-                    current = section.getAttribute('id');
-                }
-            });
-
-            navLinks.forEach(link => {
-                link.classList.remove('active');
-                if (link.getAttribute('data-target') === current) {
-                    link.classList.add('active');
-                }
-            });
+        // Advance 3D Logo Tilt (Follows Mouse)
+        const logo = document.getElementById('logo3d');
+        document.addEventListener('mousemove', (e) => {
+            let xAxis = (window.innerWidth / 2 - e.pageX) / 15;
+            let yAxis = (window.innerHeight / 2 - e.pageY) / 15;
+            logo.style.transform = `rotateY(${xAxis}deg) rotateX(${yAxis}deg) translateY(-20px)`;
         });
 
-        // 3D Logo Tilt Logic
-        document.addEventListener('mousemove', (e) => {
-            const logo = document.getElementById('acat-logo');
-            if(logo) {
-                let x = (window.innerWidth / 2 - e.pageX) / 25;
-                let y = (window.innerHeight / 2 - e.pageY) / 25;
-                logo.style.transform = `rotateY(${x}deg) rotateX(${y}deg)`;
-            }
+        // Reset logo on mouse leave
+        document.addEventListener('mouseleave', () => {
+            logo.style.transform = `rotateY(0deg) rotateX(0deg) translateY(0px)`;
         });
     </script>
 </body>
