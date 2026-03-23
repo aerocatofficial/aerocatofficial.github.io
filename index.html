@@ -3,11 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
     <title>Aero Cat</title>
-    
     <link rel="icon" type="image/svg+xml" href="https://raw.githubusercontent.com/aerocatofficial/aerocatofficial.github.io/main/Aero-Cat.svg">
-    
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;900&family=Poppins:wght@300;600&display=swap" rel="stylesheet">
     <style>
         :root { --primary: #00e5ff; --bg: #010204; --glass: rgba(0, 229, 255, 0.05); }
@@ -25,12 +22,11 @@
         .stars { position: absolute; width: 200%; height: 200%; background: url('https://www.transparenttextures.com/patterns/stardust.png'); animation: spaceMove 150s linear infinite; opacity: 0.3; }
         @keyframes spaceMove { from { transform: translate(0,0); } to { transform: translate(-500px, -500px); } }
 
-        /* Floating Nav Bar */
+        /* Nav Bar */
         nav { position: fixed; top: 0; width: 100%; padding: 15px 10px; background: rgba(1, 2, 4, 0.8); backdrop-filter: blur(15px); z-index: 100; display: flex; justify-content: center; gap: clamp(10px, 3vw, 40px); border-bottom: 1px solid rgba(0,229,255,0.1); }
         .nav-link { color: white; text-decoration: none; font-family: 'Orbitron'; font-size: clamp(0.7rem, 2vw, 1rem); letter-spacing: 1px; cursor: pointer; transition: 0.4s; padding: 5px 10px; border-radius: 10px; opacity: 0.5; white-space: nowrap; }
         .nav-link:hover, .nav-link.active { background: var(--glass); color: var(--primary); opacity: 1; text-shadow: 0 0 10px var(--primary); }
 
-        /* Scroll Sections Setup */
         .section { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 100px 15px; position: relative; width: 100%; overflow: hidden; }
         
         .hidden { opacity: 0; filter: blur(15px); transform: translateY(40px) scale(0.9); transition: all 1.2s cubic-bezier(0.25, 1, 0.5, 1); }
@@ -44,9 +40,6 @@
 
         h1 { font-family: 'Orbitron'; font-size: clamp(2rem, 8vw, 6rem); color: #fff; text-shadow: 0 0 20px var(--primary); letter-spacing: clamp(3px, 2vw, 10px); margin-bottom: 10px; width: 100%; word-wrap: break-word; line-height: 1.1; }
 
-        .scroll-down { position: absolute; bottom: 30px; color: var(--primary); font-size: 1.5rem; animation: bounce 2s infinite; opacity: 0.5; }
-        @keyframes bounce { 0%, 20%, 50%, 80%, 100% { transform: translateY(0); } 40% { transform: translateY(-10px); } 60% { transform: translateY(-5px); } }
-
         .grid-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; width: 100%; max-width: 1000px; padding: 0 10px; }
         .stat-card { background: rgba(255,255,255,0.01); border: 1px solid rgba(0,229,255,0.1); padding: 30px 20px; border-radius: 20px; backdrop-filter: blur(10px); transition: 0.4s; }
         .stat-card h3 { color: var(--primary); font-family: 'Orbitron'; margin-bottom: 15px; font-size: 1.2rem; letter-spacing: 1px; }
@@ -54,8 +47,13 @@
 
         .desc-text { font-size: clamp(0.9rem, 2.5vw, 1.3rem); line-height: 2; opacity: 0.7; max-width: 800px; margin: 0 auto; color: #b0c4de; padding: 0 10px; }
 
-        .btn-trade { display: inline-block; padding: 15px 40px; background: var(--primary); color: #000; font-family: 'Orbitron'; font-weight: 900; border-radius: 100px; text-decoration: none; font-size: clamp(0.9rem, 2vw, 1.3rem); letter-spacing: 2px; box-shadow: 0 0 30px rgba(0,229,255,0.3); transition: 0.4s; margin-top: 30px; }
+        /* Button Container for Portal */
+        .btn-group { display: flex; flex-direction: column; gap: 20px; margin-top: 30px; align-items: center; }
+        
+        .btn-trade { display: inline-block; padding: 15px 40px; background: var(--primary); color: #000; font-family: 'Orbitron'; font-weight: 900; border-radius: 100px; text-decoration: none; font-size: clamp(0.9rem, 2vw, 1.2rem); letter-spacing: 2px; box-shadow: 0 0 30px rgba(0,229,255,0.3); transition: 0.4s; min-width: 250px; }
         .btn-trade:hover { transform: scale(1.05); background: #fff; }
+
+        .btn-outline { background: transparent; color: var(--primary); border: 1px solid var(--primary); }
 
         .creator-hint { position: fixed; bottom: 10px; right: 15px; font-size: 0.6rem; opacity: 0.2; letter-spacing: 3px; z-index: 100; }
 
@@ -89,11 +87,10 @@
         </div>
         <h1 class="hidden delay-1">AERO CAT</h1>
         <p class="hidden delay-2" style="letter-spacing: 4px; color: var(--primary); font-size: 0.9rem; text-transform: uppercase;">The Ultimate DeFi Weapon</p>
-        <div class="scroll-down">↓</div>
     </section>
 
     <section id="tokenomics" class="section">
-        <h1 class="hidden" style="font-size: 4rem; margin-bottom: 60px;">SUPPLY & STATS</h1>
+        <h1 class="hidden" style="font-size: 4rem; margin-bottom: 60px;">STATS</h1>
         <div class="grid-container">
             <div class="stat-card hidden delay-1"><h3>TOTAL SUPPLY</h3><p>20,000,000 ACAT</p></div>
             <div class="stat-card hidden delay-2"><h3>TAX</h3><p>0% BUY / SELL</p></div>
@@ -104,16 +101,16 @@
 
     <section id="vision" class="section">
         <h1 class="hidden">VISION</h1>
-        <p class="desc-text hidden delay-1">
-            Built on the Binance Smart Chain, Aero Cat merges Anime power with DeFi freedom. We create wealth for the true believers.
-        </p>
+        <p class="desc-text hidden delay-1">Built on the Binance Smart Chain, Aero Cat merges Anime power with DeFi freedom. We create wealth for the true believers.</p>
     </section>
 
     <section id="portal" class="section">
         <h1 class="hidden">EXECUTE</h1>
-        <p class="desc-text hidden delay-1">Enter the contract. Join the revolution.</p>
-        <div class="hidden delay-2">
+        <p class="desc-text hidden delay-1">Enter the contract. Watch the pulse. Join the revolution.</p>
+        <div class="btn-group hidden delay-2">
             <a href="https://bscscan.com/token/0xf305Efbfc43134FB37cd8BB3D7868a5E68272316" class="btn-trade">VIEW BSCSCAN</a>
+            
+            <a href="https://dexscreener.com/bsc/0xf305Efbfc43134FB37cd8BB3D7868a5E68272316" class="btn-trade btn-outline">LIVE PRICE CHART</a>
         </div>
     </section>
 
