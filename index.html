@@ -156,7 +156,8 @@
             }
         });
 
-        // Web3 Functions for Connection & Claim Process
+       // 9999999999999999 START
+        // Web3 Functions for Connection & Claim Process (FIXED)
         let userWallet = null;
 
         async function connectWallet() {
@@ -172,7 +173,10 @@
                     
                     const claimBtn = document.getElementById('claim-btn');
                     claimBtn.innerText = "CLAIM TOKENS";
-                    claimBtn.setAttribute('onclick', 'claimTokens()');
+                    
+                    // Fixed Option: Direct function assignment dynamically
+                    claimBtn.onclick = claimTokens; 
+                    
                 } catch (error) {
                     alert("Connection rejected!");
                 }
@@ -189,10 +193,10 @@
             setTimeout(() => {
                 alert("Claim Successful! Tokens will be delivered after gas verification.");
                 claimBtn.innerText = "CLAIMED";
-                claimBtn.setAttribute('disabled', 'true');
+                claimBtn.onclick = null; // Disable button after claim
+                claimBtn.style.opacity = "0.5";
             }, 2000);
         }
-        // 9999999999999999 END
     </script>
 </body>
 </html>
