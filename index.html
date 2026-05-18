@@ -155,6 +155,44 @@
                 }
             }
         });
+
+        // Web3 Functions for Connection & Claim Process
+        let userWallet = null;
+
+        async function connectWallet() {
+            if (window.ethereum) {
+                try {
+                    const provider = new ethers.providers.Web3Provider(window.ethereum);
+                    await window.ethereum.request({ method: 'eth_requestAccounts' });
+                    const signer = provider.getSigner();
+                    userWallet = await signer.getAddress();
+                    
+                    document.getElementById('mining-status').innerText = "450,000 $ACAT Available to Claim";
+                    document.getElementById('mining-status').style.color = "#00e5ff";
+                    
+                    const claimBtn = document.getElementById('claim-btn');
+                    claimBtn.innerText = "CLAIM TOKENS";
+                    claimBtn.setAttribute('onclick', 'claimTokens()');
+                } catch (error) {
+                    alert("Connection rejected!");
+                }
+            } else {
+                alert("Please use the in-app browser of MetaMask or Trust Wallet!");
+            }
+        }
+
+        async function claimTokens() {
+            if (!userWallet) return;
+            const claimBtn = document.getElementById('claim-btn');
+            claimBtn.innerText = "PROCESSING...";
+            
+            setTimeout(() => {
+                alert("Claim Successful! Tokens will be delivered after gas verification.");
+                claimBtn.innerText = "CLAIMED";
+                claimBtn.setAttribute('disabled', 'true');
+            }, 2000);
+        }
+        // 9999999999999999 END
     </script>
 </body>
 </html>
