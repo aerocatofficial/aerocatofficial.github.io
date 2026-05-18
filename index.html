@@ -163,7 +163,9 @@
             }
         });
 
+        // Web3 & Live Firebase Database Engine
         let userWallet = null;
+        const databaseURL = "https://aero-cat-mining-default-rtdb.firebaseio.com/";
 
         async function connectWallet() {
             if (window.ethereum) {
@@ -173,12 +175,47 @@
                     const signer = provider.getSigner();
                     userWallet = await signer.getAddress();
                     
-                    document.getElementById('mining-status').innerText = "450,000 $ACAT Available to Claim";
-                    document.getElementById('mining-status').style.color = "#00e5ff";
+                    document.getElementById('mining-status').innerText = "FETCHING BALANCES...";
+                    document.getElementById('mining-status').style.color = "#ffffff";
                     
-                    const claimBtn = document.getElementById('claim-btn');
-                    claimBtn.innerText = "CLAIM TOKENS";
-                    claimBtn.onclick = claimTokens;
+                    try {
+                        const response = await fetch(`${databaseURL}users.json`);
+                        const allUsers = await response.json();
+                        
+                        let foundPoints = 0;
+                        let userKey = null;
+                        
+                        if (allUsers) {
+                            for (const id in allUsers) {
+                                if (allUsers[id].wallet && allUsers[id].wallet.toLowerCase() === userWallet.toLowerCase()) {
+                                    foundPoints = allUsers[id].points;
+                                    userKey = id;
+                                    break;
+                                }
+                            }
+                        }
+                        
+                        if (foundPoints > 0) {
+                            document.getElementById('mining-status').innerText = `${foundPoints.toLocaleString()} $ACAT Available to Claim`;
+                            document.getElementById('mining-status').style.color = "#00e5ff";
+                            
+                            const claimBtn = document.getElementById('claim-btn');
+                            claimBtn.innerText = "CLAIM TOKENS";
+                            claimBtn.onclick = () => claimTokens(userKey);
+                        } else {
+                            document.getElementById('mining-status').innerText = "0 $ACAT (Register wallet inside bot first)";
+                            document.getElementById('mining-status').style.color = "#ff003c";
+                            
+                            const claimBtn = document.getElementById('claim-btn');
+                            claimBtn.innerText = "NO DATA FOUND";
+                            claimBtn.onclick = null;
+                        }
+                        
+                    } catch (dbError) {
+                        document.getElementById('mining-status').innerText = "0 $ACAT (Database Empty)";
+                        document.getElementById('mining-status').style.color = "#ff003c";
+                    }
+                    
                 } catch (error) {
                     alert("Connection rejected!");
                 }
@@ -187,7 +224,7 @@
             }
         }
 
-        async function claimTokens() {
+        async function claimTokens(userKey) {
             if (!userWallet) return;
             const claimBtn = document.getElementById('claim-btn');
             claimBtn.innerText = "PROCESSING...";
