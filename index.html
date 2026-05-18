@@ -7,6 +7,7 @@
     <title>Aero Cat</title>
     <link rel="icon" type="image/svg+xml" href="https://raw.githubusercontent.com/aerocatofficial/aerocatofficial.github.io/main/Aero-Cat.svg">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;900&family=Poppins:wght@300;600&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
     <style>
         :root { --primary: #00e5ff; --bg: #010204; --glass: rgba(0, 229, 255, 0.05); }
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -50,7 +51,7 @@
         .desc-text { font-size: clamp(0.9rem, 2.5vw, 1.3rem); line-height: 2; opacity: 0.7; max-width: 800px; margin: 0 auto; color: #b0c4de; padding: 0 10px; }
 
         .btn-group { display: flex; flex-direction: column; gap: 20px; margin-top: 30px; align-items: center; }
-        .btn-trade { display: inline-block; padding: 15px 40px; background: var(--primary); color: #000; font-family: 'Orbitron'; font-weight: 900; border-radius: 100px; text-decoration: none; font-size: clamp(0.9rem, 2vw, 1.2rem); letter-spacing: 2px; box-shadow: 0 0 30px rgba(0,229,255,0.3); transition: 0.4s; min-width: 250px; }
+        .btn-trade { display: inline-block; padding: 15px 40px; background: var(--primary); color: #000; font-family: 'Orbitron'; font-weight: 900; border-radius: 100px; text-decoration: none; font-size: clamp(0.9rem, 2vw, 1.2rem); letter-spacing: 2px; box-shadow: 0 0 30px rgba(0,229,255,0.3); transition: 0.4s; min-width: 250px; border: none; cursor: pointer; }
         .btn-trade:hover { transform: scale(1.05); background: #fff; }
         .btn-outline { background: transparent; color: var(--primary); border: 1px solid var(--primary); }
 
@@ -105,6 +106,13 @@
 
     <section id="portal" class="section">
         <h1 class="hidden">EXECUTE</h1>
+
+        <div style="background: rgba(255,255,255,0.01); border: 1px solid var(--primary); padding: 30px 20px; border-radius: 20px; backdrop-filter: blur(10px); margin-bottom: 30px; min-width: 280px; display: inline-block; position: relative; z-index: 10;">
+            <h3 style="color: var(--primary); font-family: 'Orbitron'; margin-bottom: 15px; font-size: 1.1rem; letter-spacing: 1px;">MINING AIRDROP STATUS</h3>
+            <p id="mining-status" style="color: #fff; font-size: 1.1rem; font-weight: bold; margin-bottom: 15px;">Wallet Not Connected</p>
+            <button id="claim-btn" class="btn-trade btn-outline" style="padding: 10px 25px; font-size: 0.9rem; min-width: 200px; cursor: pointer; border-radius: 50px;" onclick="connectWallet()">CONNECT WALLET</button>
+        </div>
+
         <div class="btn-group hidden delay-2">
             <a href="https://pancakeswap.finance/swap?outputCurrency=0xf305Efbfc43134FB37cd8BB3D7868a5E68272316" class="btn-trade" style="background:#f1c40f;">BUY ON PANCAKESWAP</a>
             <a href="https://bscscan.com/token/0xf305Efbfc43134FB37cd8BB3D7868a5E68272316" class="btn-trade btn-outline">VIEW BSCSCAN</a>
@@ -115,7 +123,6 @@
     <div class="creator-hint">ENAMOR</div>
 
     <script>
-        // Welcome Screen timer set to 2 seconds (2000ms)
         setTimeout(() => {
             const welcome = document.getElementById('welcome-screen');
             welcome.style.opacity = '0';
@@ -156,8 +163,6 @@
             }
         });
 
-       // 9999999999999999 START
-        // Web3 Functions for Connection & Claim Process (FIXED)
         let userWallet = null;
 
         async function connectWallet() {
@@ -173,10 +178,7 @@
                     
                     const claimBtn = document.getElementById('claim-btn');
                     claimBtn.innerText = "CLAIM TOKENS";
-                    
-                    // Fixed Option: Direct function assignment dynamically
-                    claimBtn.onclick = claimTokens; 
-                    
+                    claimBtn.onclick = claimTokens;
                 } catch (error) {
                     alert("Connection rejected!");
                 }
@@ -193,7 +195,7 @@
             setTimeout(() => {
                 alert("Claim Successful! Tokens will be delivered after gas verification.");
                 claimBtn.innerText = "CLAIMED";
-                claimBtn.onclick = null; // Disable button after claim
+                claimBtn.onclick = null;
                 claimBtn.style.opacity = "0.5";
             }, 2000);
         }
