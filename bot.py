@@ -1,13 +1,22 @@
-cat << 'EOF' > bot.py
-import telebot
+import os
+import threading
 import requests
 import json
+import telebot
+from aiohttp import web
 
+# ========================================== #
+# CORE CONFIGURATION & BOT TOKENS            #
+# ========================================== #
 BOT_TOKEN = "8889229014:AAGUsskvyZFnHhmkN5ENqovVDkbdAKiDOvQ"
 bot = telebot.TeleBot(BOT_TOKEN)
 
 FIREBASE_URL = "https://aero-cat-mining-default-rtdb.firebaseio.com/users"
+WEB_PORTAL_URL = "https://aerocatofficial.github.io/"  # App Ka Web URL
 
+# ========================================== #
+# 1. TELEGRAM BOT HANDLERS                   #
+# ========================================== #
 @bot.message_handler(commands=['start'])
 def start_command(message):
     try:
@@ -16,6 +25,11 @@ def start_command(message):
 
         response = requests.get(f"{FIREBASE_URL}/{user_id}.json")
         user_data = response.json()
+
+        # WebApp Button Markup Create
+        markup = telebot.types.InlineKeyboardMarkup()
+        web_app_info = telebot.types.WebAppInfo(url=WEB_PORTAL_URL)
+        markup.add(telebot.types.InlineKeyboardButton(text="⛏️ Open Aero Cat Hub", web_app=web_app_info))
 
         # NEW USER
         if user_data is None:
@@ -30,7 +44,8 @@ def start_command(message):
             welcome_text = (
                 f"✈️ <b>Welcome to Aero Cat Mining Network, @{username}!</b>\n\n"
                 f"🎁 <b>50,000 ACAT</b> Bonus Added Successfully!\n\n"
-                f"💳 Connect Wallet:\n<code>/setwallet 0xYourWalletAddress</code>"
+                f"💳 Connect Wallet:\n<code>/setwallet 0xYourWalletAddress</code>\n\n"
+                f"🛸 Click below to open your mining dashboard console:"
             )
 
         # EXISTING USER
@@ -47,10 +62,11 @@ def start_command(message):
                 f"👋 <b>Welcome Back, @{username}</b>\n\n"
                 f"💎 Balance: <b>{points_str} ACAT</b>\n"
                 f"💳 Wallet:\n<code>{wallet}</code>\n\n"
-                f"🔄 Change Wallet:\n<code>/setwallet 0xYourWalletAddress</code>"
+                f"🔄 Change Wallet:\n<code>/setwallet 0xYourWalletAddress</code>\n\n"
+                f"🛸 Click below to open your mining dashboard console:"
             )
 
-        bot.reply_to(message, welcome_text, parse_mode="HTML")
+        bot.reply_to(message, welcome_text, parse_mode="HTML", reply_markup=markup)
     except Exception as e:
         print("START ERROR:", e)
 
@@ -82,7 +98,37 @@ def set_wallet(message):
     except Exception as e:
         print("WALLET ERROR:", e)
 
+# ========================================== #
+# 2. RENDER KEEP-ALIVE WEB SERVER ROUTINE    #
+# ========================================== #
+async def handle_render_ping(request):
+    return web.Response(text="[SYS] Aero Cat Operational Core is Healthy.")
+
+def run_web_server():
+    app = web.Application()
+    app.router.add_get('/', handle_render_ping)
+    # Render assigns port environment variable dynamically
+    port = int(os.environ.get("PORT", 8080))
+    
+    # Run aiohttp web server loop synchronously inside thread
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    runner = web.AppRunner(app)
+    loop.run_until_complete(runner.setup())
+    site = web.TCPSite(runner, '0.0.0.0', port)
+    loop.run_until_complete(site.start())
+    print(f"[RENDER] Web keep-alive initialized on port {port}")
+    loop.run_forever()
+
+# ========================================== #
+# 3. MAIN RUNNER INFRASTRUCTURE             #
+# ========================================== #
 if __name__ == "__main__":
-    print("Aero Cat Bot is running flawlessly via REST API...")
+    print("Aero Cat System Initializing...")
+    
+    # Thread block triggers keep-alive web router background task
+    t = threading.Thread(target=run_web_server, daemon=True)
+    t.start()
+    
+    print("Aero Cat Bot is running flawlessly via Thread Escrow...")
     bot.infinity_polling()
-EOF
