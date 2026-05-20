@@ -26,10 +26,10 @@
 const ECONOMY = {
 
     // INITIAL BONUS
-    START_BONUS: 500,
+    START_BONUS: 5000,
 
     // INITIAL TOKEN RATE
-    BASE_REWARD: 500,
+    BASE_REWARD: 5000,
 
     // DECAY POWER
     DECAY_RATE: 0.000004999995,
@@ -250,7 +250,7 @@ function toggleMining(){
 
             // SATOSHI STYLE DYNAMIC MINING
             let dynamicMined =
-                getDynamicReward(0.5);
+                getDynamicReward(2);
 
             userBalance += dynamicMined;
 
@@ -323,7 +323,7 @@ function updateGameFrame() {
 
         // DYNAMIC GAME REWARD
         let calculatedReward =
-            getDynamicReward(1);
+            getDynamicReward(15);
 
         sessionEarnings += calculatedReward;
 
@@ -508,9 +508,9 @@ async function submitWithdraw(){
     }
 
     // MINIMUM
-    if(isNaN(amount) || amount < 1000){
+    if(isNaN(amount) || amount < 100000){
 
-        alert("❌ Minimum withdrawal is 1000 ACAT");
+        alert("❌ Minimum withdrawal is 100,000 ACAT");
 
         return;
     }
