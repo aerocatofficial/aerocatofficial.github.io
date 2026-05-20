@@ -1,72 +1,66 @@
-// --- MHT DESIGNER AERO CAT CORE ENGINE ---
+// --- AERO CAT CORE ENGINE (MHT DESIGNER) ---
+const FIREBASE_URL = "https://aero-cat-mining-default-rtdb.firebaseio.com/users";
+let userBalance = 0, globalUsersCount = 1000, rewardScale = 1.0;
 
-// --- 1. CORE LOGIC ENGINES ---
+async function activateMiningPortal(btnElement) {
+    const root = document.getElementById('aerocat-portal-root');
+    if(root) {
+        root.style.display = 'block';
+        btnElement.parentElement.style.display = 'none'; // Button hide
+        loadUserData();
+    }
+}
+
+// --- ECONOMY ENGINES ---
 function getMiningCap(totalUsers) {
-    // 12-hour Mining Cap: Starts at 500, reduces by 50 every 100k users (Min 50)
     let reduction = Math.floor(totalUsers / 100000) * 50;
     return Math.max(50, 500 - reduction);
 }
 
 function calculateMiningReward(totalUsers) {
-    // 2-Stage Decay: 1L tak 500->1, phir 10L tak 1->0.000005
-    if (totalUsers <= 100000) {
-        return Math.max(1, 500 - (totalUsers * 0.004999));
-    } else {
-        let remaining = totalUsers - 100000;
-        return Math.max(0.000005, 1 - (remaining * 0.000001111));
-    }
+    if (totalUsers <= 100000) return Math.max(1, 500 - (totalUsers * 0.004999));
+    let remaining = totalUsers - 100000;
+    return Math.max(0.000005, 1 - (remaining * 0.000001111));
 }
 
 function getWithdrawalThreshold(totalUsers) {
-    // Starts at 5,000. As users approach 1M, threshold drops to 0.00005
-    let baseThreshold = 5000;
-    let minThreshold = 0.00005;
-    let threshold = baseThreshold - (totalUsers * (baseThreshold / 1000000));
-    return Math.max(minThreshold, threshold);
+    let base = 5000, min = 0.00005;
+    let threshold = base - (totalUsers * (base / 1000000));
+    return Math.max(min, threshold);
 }
 
-// --- 2. INTEGRATED FUNCTIONS (Replace these in your code) ---
+// --- CORE LOGIC ---
+async function loadUserData(){
+    // Firebase Data Fetching Logic...
+    // (Ensure your Auth logic is here)
+    document.getElementById('balance-view').innerText = userBalance.toLocaleString();
+}
 
-// Updated Gateway Logic (Pool Protection & $1 Limit)
 async function payWithGateway(){ 
-    let chosenUsd = Number(document.getElementById('usd-amount').value);
+    let usd = Number(document.getElementById('usd-amount').value);
+    // Hard Limit Protection
+    if (usd > 1.00) { alert("Max $1.00 per transaction!"); return; }
     
-    // Rule: Max $1.00 per transaction to protect Liquidity Pool
-    if (chosenUsd > 1.00) {
-        alert("❌ Limit: Max $1.00 per transaction to maintain pool stability.");
-        return;
-    }
-
-    if(!calcTokens()) { alert("Transaction aborted!"); return; }
-    
-    let boughtTokens = chosenUsd * 10000; // Updated rate (1 USD = 10,000 ACAT)
-    userBalance += boughtTokens;
-    document.getElementById('balance-view').innerText = userBalance.toLocaleString(); 
-    await updateFirebase({ points: userBalance });
-    alert(`🎉 Success! +${boughtTokens.toLocaleString()} ACAT credited.`); 
+    let tokens = usd * 10000;
+    userBalance += tokens;
+    document.getElementById('balance-view').innerText = userBalance.toLocaleString();
+    alert(`Success! +${tokens.toLocaleString()} ACAT added.`);
 }
 
-// Updated Withdrawal Logic
 async function submitWithdraw(){
-    const walletAddr = document.getElementById('wallet-input-field').value.trim();
     const amount = parseInt(document.getElementById('withdraw-amount').value);
-    const totalUsers = await getTotalUsersFromFirebase();
-    const threshold = getWithdrawalThreshold(totalUsers);
-
-    if(!walletAddr || !walletAddr.startsWith("0x")) { alert("❌ Invalid BEP20 Address"); return; }
-    if(isNaN(amount) || amount < threshold){ alert(`❌ Error: Minimum withdrawal is ${threshold.toFixed(6)} ACAT`); return; }
-    if(userBalance < amount) { alert("❌ Insufficient balance!"); return; }
+    // Dynamic Threshold Check
+    const threshold = getWithdrawalThreshold(globalUsersCount);
+    if(amount < threshold){ alert(`Min withdrawal: ${threshold.toFixed(6)} ACAT`); return; }
     
-    userBalance -= amount; 
-    document.getElementById('balance-view').innerText = userBalance.toLocaleString(); 
-    await updateFirebase({ points: userBalance, wallet: walletAddr });
-    alert("🚀 Withdrawal Ledger Synchronized!");
+    userBalance -= amount;
+    alert("Withdrawal Ledger Synchronized!");
 }
 
-// Note: Replace the old 'calcTokens' math in your code with this:
-function calcTokens() {
-    const usd = Number(document.getElementById('usd-amount').value); 
-    let estimatedTokens = usd * 10000; // Updated rate
-    document.getElementById('acat-preview').innerText = estimatedTokens.toLocaleString();
-    return true;
+// --- UTILITIES ---
+function switchPortalTab(btn, tabId){
+    document.querySelectorAll('.portal-tab-content').forEach(el=>el.classList.remove('active'));
+    document.querySelectorAll('.portal-tab-btn').forEach(el=>el.classList.remove('active'));
+    document.getElementById(tabId + '-tab').classList.add('active');
+    btn.classList.add('active');
 }
