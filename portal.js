@@ -1,174 +1,149 @@
-/* =========================================================
-   DYNAMIC SATOSHI-STYLE ECONOMY ENGINE
-   =========================================================
+# Updated Dynamic Economy Logic for `portal.js`
 
-   ✅ Reward automatically decreases as users increase
-   ✅ Welcome bonus becomes dynamic
-   ✅ Mining rewards become dynamic
-   ✅ Trading payout becomes dynamic
-   ✅ Buy pool rate becomes dynamic
-   ✅ Withdraw becomes dynamic
+## 1) Replace Your Global Variables Section With This
 
-   TARGET EXAMPLE:
-   1 User        = High rewards
-   10,000 Users  = Lower rewards
-   100,000 Users = Very low rewards
-   1,000,000 Users = ~0.00005 style economy
+```javascript
+const FIREBASE_URL = "https://aero-cat-mining-default-rtdb.firebaseio.com/users";
+const MAX_TOTAL_SUPPLY = 20000000;
 
-========================================================= */
+let userBalance = 0;
+let globalUsersCount = 1000;
+let rewardScale = 1.0;
+let audioCtx = null;
 
+/* ===========================
+   DYNAMIC ECONOMY ENGINE
+=========================== */
 
-/* ===============================
-   ECONOMY SETTINGS
-================================= */
+const MAX_NETWORK_USERS = 1000000;
 
-const ECONOMY = {
+function getDynamicScale() {
 
-    // INITIAL BONUS
-    START_BONUS: 5000,
+    let scale = 1 - (globalUsersCount / MAX_NETWORK_USERS);
 
-    // INITIAL TOKEN RATE
-    BASE_REWARD: 5000,
+    if(scale < 0.000001)
+        scale = 0.000001;
 
-    // DECAY POWER
-    DECAY_RATE: 0.000004999995,
+    return scale;
+}
 
-    // MINIMUM VALUE
-    MIN_REWARD: 0.00005
-};
+function getDynamicGameReward() {
 
+    // Starts high → slowly drops
+    let reward = 1 * getDynamicScale();
 
-/* ===============================
-   DYNAMIC REWARD ENGINE
-================================= */
+    if(reward < 0.00005)
+        reward = 0.00005;
 
-function getDynamicReward(baseAmount = 1){
+    return parseFloat(reward.toFixed(6));
+}
 
-    let users = globalUsersCount;
+function getDynamicMiningReward() {
 
-    // SATOSHI STYLE DECAY
-    let dynamicValue =
-        baseAmount / (1 + (users * ECONOMY.DECAY_RATE));
+    // Max 100 ACAT per hour initially
+    let reward = 100 * getDynamicScale();
 
-    // NEVER BELOW MINIMUM
-    if(dynamicValue < ECONOMY.MIN_REWARD){
-        dynamicValue = ECONOMY.MIN_REWARD;
+    if(reward < 0.00005)
+        reward = 0.00005;
+
+    return parseFloat(reward.toFixed(6));
+}
+
+function getDynamicReferralReward() {
+
+    let reward = 100 * getDynamicScale();
+
+    if(reward < 0.00001)
+        reward = 0.00001;
+
+    return parseFloat(reward.toFixed(6));
+}
+
+function getDynamicWithdrawMinimum() {
+
+    let minimum = 1000 * getDynamicScale();
+
+    if(minimum < 0.00005)
+        minimum = 0.00005;
+
+    return parseFloat(minimum.toFixed(6));
+}
+
+function getDynamicBuyRate() {
+
+    // 1 USD = 25,000 ACAT initially
+    let rate = 25000 * getDynamicScale();
+
+    if(rate < 0.000005)
+        rate = 0.000005;
+
+    return parseFloat(rate.toFixed(6));
+}
+
+/* ===========================
+   BALANCE DEDUCTION LOGIC
+=========================== */
+
+async function deductBalance(amount) {
+
+    amount = parseFloat(amount);
+
+    if(isNaN(amount) || amount <= 0) {
+        return false;
     }
 
-    return parseFloat(dynamicValue.toFixed(8));
-}
+    if(userBalance < amount) {
 
+        alert(`❌ Insufficient Balance! Need ${amount.toLocaleString()} ACAT`);
 
-/* ===============================
-   DYNAMIC WELCOME BONUS
-================================= */
-
-function getWelcomeBonus(){
-
-    return Math.floor(
-        getDynamicReward(ECONOMY.START_BONUS)
-    );
-}
-
-
-/* ===============================
-   DYNAMIC BUY RATE
-================================= */
-
-function getCurrentTokenRate(){
-
-    return getDynamicReward(ECONOMY.BASE_REWARD);
-}
-
-
-/* ===============================
-   FETCH GLOBAL USERS
-================================= */
-
-async function fetchGlobalNetworkCount() {
-
-    try {
-
-        const userRes =
-            await fetch(`${FIREBASE_URL}.json?shallow=true`);
-
-        const allUsers = await userRes.json();
-
-        if(allUsers) {
-
-            globalUsersCount =
-                Object.keys(allUsers).length;
-
-            if(globalUsersCount < 1){
-                globalUsersCount = 1;
-            }
-
-            document.getElementById('network-users').innerText =
-                `Global Active Miners: ${globalUsersCount.toLocaleString()}`;
-
-            console.log(
-                "🌍 USERS:",
-                globalUsersCount,
-                "CURRENT RATE:",
-                getCurrentTokenRate()
-            );
-        }
-
-    } catch(e){
-        console.log(e);
+        return false;
     }
+
+    userBalance -= amount;
+
+    document.getElementById('balance-view').innerText =
+        userBalance.toLocaleString();
+
+    await updateFirebase({
+        points: userBalance
+    });
+
+    return true;
 }
+```
 
+---
 
-/* ===============================
-   WELCOME BONUS UPDATED
-================================= */
+# 2) Replace `loadUserData()` With This
 
+```javascript
 async function loadUserData(){
 
-    const greet =
-        document.getElementById("user-greeting");
+    const greet = document.getElementById("user-greeting");
 
-    if(greet){
-        greet.innerText =
-            `🐱 Welcome, @${username}`;
-    }
+    if(greet)
+        greet.innerText = `🐱 Welcome, @${username}`;
 
-    const baseAppUrl =
-        window.location.href.split('?')[0];
+    const baseAppUrl = window.location.href.split('?')[0];
 
-    const refField =
-        document.getElementById('ref-link-field');
+    const refField = document.getElementById('ref-link-field');
 
-    if(refField){
-        refField.value =
-            `${baseAppUrl}?ref=${userId}`;
-    }
+    if(refField)
+        refField.value = `${baseAppUrl}?ref=${userId}`;
 
     try{
 
-        await fetchGlobalNetworkCount();
+        const response = await fetch(`${FIREBASE_URL}/${userId}.json`);
 
-        const response =
-            await fetch(`${FIREBASE_URL}/${userId}.json`);
+        const data = await response.json();
 
-        const data =
-            await response.json();
-
-        // EXISTING USER
         if(data){
 
-            userBalance =
-                parseFloat(data.points || 0);
+            userBalance = parseFloat(data.points || 0);
 
-            let wField =
-                document.getElementById('wallet-input-field');
+            let wField = document.getElementById('wallet-input-field');
 
-            if(
-                wField &&
-                data.wallet &&
-                data.wallet !== "Not Connected"
-            ){
+            if(wField && data.wallet && data.wallet !== "Not Connected") {
                 wField.value = data.wallet;
             }
 
@@ -181,86 +156,118 @@ async function loadUserData(){
             document.getElementById('refer-earning-view').innerText =
                 (data.referral_rewards || 0).toLocaleString();
 
-        }
+        } else {
 
-        // NEW USER
-        else{
-
-            // DYNAMIC BONUS
-            let welcomeBonus =
-                getWelcomeBonus();
-
-            userBalance = welcomeBonus;
+            // NEW USER BONUS
+            userBalance = 5000;
 
             await updateFirebase({
                 username: username,
-                points: userBalance,
+                points: 5000,
                 wallet: "Not Connected",
                 referrals_count: 0,
                 referral_rewards: 0,
-                welcome_bonus: true,
-                created_at: Date.now()
+                welcome_bonus: true
             });
 
-            console.log(
-                `🎁 Welcome Bonus: ${welcomeBonus} ACAT`
-            );
+            console.log("✅ 5000 ACAT Welcome Bonus Added");
         }
 
         document.getElementById('balance-view').innerText =
-            Number(userBalance).toLocaleString();
+            userBalance.toLocaleString();
 
         checkReferralParameters();
 
-    }catch(error){
+        fetchGlobalNetworkCount();
 
+    } catch(error) {
         console.log(error);
     }
 }
+```
 
+---
 
-/* ===============================
-   MINING ENGINE UPDATED
-================================= */
+# 3) Replace Referral Reward Section Inside `checkReferralParameters()`
+
+Find This:
+
+```javascript
+let curRewards =
+    parseInt(refData.referral_rewards || 0) + 250;
+
+let curPoints =
+    parseInt(refData.points || 0) + 250;
+```
+
+Replace With:
+
+```javascript
+let dynamicReferral = getDynamicReferralReward();
+
+let curRewards =
+    parseFloat(refData.referral_rewards || 0) + dynamicReferral;
+
+let curPoints =
+    parseFloat(refData.points || 0) + dynamicReferral;
+```
+
+---
+
+# 4) Replace Game Reward Section Inside `updateGameFrame()`
+
+Find This:
+
+```javascript
+let calculatedReward =
+    Math.round(15 * rewardScale);
+
+if(calculatedReward < 1)
+    calculatedReward = 1;
+```
+
+Replace With:
+
+```javascript
+let calculatedReward = getDynamicGameReward();
+```
+
+---
+
+# 5) Replace Entire `toggleMining()` Function
+
+```javascript
+let miningInterval = null;
 
 function toggleMining(){
 
-    const btn =
-        document.getElementById('mining-toggle-btn');
+    const btn = document.getElementById('mining-toggle-btn');
 
-    const log =
-        document.getElementById('term-log');
+    const log = document.getElementById('term-log');
 
-    const hashrate =
-        document.getElementById('live-hashrate');
+    const hashrate = document.getElementById('live-hashrate');
 
     if(!miningInterval) {
 
-        log.innerHTML +=
-            "[SYS] Starting mining processors...<br>";
+        log.innerHTML += "[SYS] Starting mining processors...<br>";
 
-        btn.innerText =
-            "Pause Mining Engine";
+        btn.innerText = "Pause Mining Engine";
 
-        btn.style.background =
-            "var(--red)";
+        btn.style.background = "var(--red)";
 
         miningInterval = setInterval(async()=>{
 
-            // SATOSHI STYLE DYNAMIC MINING
-            let dynamicMined =
-                getDynamicReward(2);
+            let hourlyReward = getDynamicMiningReward();
 
-            userBalance += dynamicMined;
+            userBalance += hourlyReward;
 
             document.getElementById('balance-view').innerText =
-                Number(userBalance).toLocaleString();
+                userBalance.toLocaleString();
 
             log.innerHTML +=
-                `[MINED] +${dynamicMined} ACAT block verified.<br>`;
+                `[MINED] +${hourlyReward} ACAT block verified.<br>`;
 
-            log.scrollTop =
-                log.scrollHeight;
+            log.scrollTop = log.scrollHeight;
 
             hashrate.innerText =
                 (11 + Math.random()*3).toFixed(2) + " GH/s";
@@ -269,7 +276,7 @@ function toggleMining(){
                 points: userBalance
             });
 
-        }, 3000);
+        }, 3600000); // 1 hour
 
     } else {
 
@@ -277,83 +284,33 @@ function toggleMining(){
 
         miningInterval = null;
 
-        log.innerHTML +=
-            "[SYS] Mining paused.<br>";
+        log.innerHTML += "[SYS] Mining paused.<br>";
 
-        btn.innerText =
-            "Start Mining Engine";
+        btn.innerText = "Start Mining Engine";
 
-        btn.style.background =
-            "var(--accent)";
+        btn.style.background = "var(--accent)";
 
-        hashrate.innerText =
-            "0.00 H/s";
+        hashrate.innerText = "0.00 H/s";
     }
 }
+```
 
+---
 
-/* ===============================
-   GAME REWARD UPDATED
-================================= */
+# 6) Replace `calcTokens()` Function
 
-function updateGameFrame() {
-
-    if(!gameActive)
-        return;
-
-    butterflyY += speed;
-
-    const bEl =
-        document.getElementById('falling-butterfly');
-
-    bEl.style.top =
-        butterflyY + "px";
-
-    if (
-        butterflyY >= 190 &&
-        butterflyY <= 230 &&
-        butterflyColumn === flowerPos
-    ) {
-        gameOver();
-        return;
-    }
-
-    if (butterflyY > 260) {
-
-        // DYNAMIC GAME REWARD
-        let calculatedReward =
-            getDynamicReward(15);
-
-        sessionEarnings += calculatedReward;
-
-        userBalance += calculatedReward;
-
-        document.getElementById('balance-view').innerText =
-            Number(userBalance).toLocaleString();
-
-        spawnButterfly();
-    }
-}
-
-
-/* ===============================
-   BUY POOL UPDATED
-================================= */
-
+```javascript
 function calcTokens() {
 
     const usd =
         Number(document.getElementById('usd-amount').value);
 
-    // DYNAMIC TOKEN RATE
-    let tokenRate =
-        getCurrentTokenRate();
+    let dynamicRate = getDynamicBuyRate();
 
-    let estimatedTokens =
-        usd * tokenRate;
+    let estimatedTokens = usd * dynamicRate;
 
     document.getElementById('acat-preview').innerText =
-        Number(estimatedTokens).toLocaleString();
+        estimatedTokens.toLocaleString();
 
     const errorLog =
         document.getElementById('buy-pool-error');
@@ -372,12 +329,13 @@ function calcTokens() {
         return true;
     }
 }
+```
 
+---
 
-/* ===============================
-   PAYMENT UPDATED
-================================= */
+# 7) Replace `payWithGateway()` Function
 
+```javascript
 async function payWithGateway(){
 
     if(!calcTokens()) {
@@ -389,144 +347,110 @@ async function payWithGateway(){
     let chosenUsd =
         Number(document.getElementById('usd-amount').value);
 
-    let tokenRate =
-        getCurrentTokenRate();
+    let dynamicRate = getDynamicBuyRate();
 
-    let boughtTokens =
-        chosenUsd * tokenRate;
+    let boughtTokens = chosenUsd * dynamicRate;
 
     userBalance += boughtTokens;
 
     document.getElementById('balance-view').innerText =
-        Number(userBalance).toLocaleString();
+        userBalance.toLocaleString();
 
     await updateFirebase({
         points: userBalance
     });
 
-    alert(
-        `🎉 Success! +${boughtTokens.toLocaleString()} ACAT credited.`
-    );
+    alert(`🎉 Success! +${boughtTokens.toLocaleString()} ACAT credited.`);
 }
+```
 
+---
 
-/* ===============================
-   TRADING PAYOUT UPDATED
-================================= */
+# 8) Replace `placeTrade()` Deduction Area
 
-async function resolveTrade() {
+Keep this:
 
-    tradeActive = false;
+```javascript
+const deducted = await deductBalance(chosenAmount);
 
-    document.getElementById('trade-timer').style.display =
-        "none";
+if(!deducted)
+    return;
+```
 
-    document.getElementById('call-btn').disabled =
-        false;
+Already correct.
 
-    document.getElementById('put-btn').disabled =
-        false;
+---
 
-    document.getElementById('trade-amount-input').disabled =
-        false;
+# 9) Replace `submitWithdraw()` Function
 
-    let finalCandle =
-        candleBars[candleBars.length - 1];
-
-    let finalPrice =
-        parseFloat(finalCandle.close.toFixed(2));
-
-    let won = false;
-
-    if(tradeType === "BUY" && finalPrice > strikePrice)
-        won = true;
-
-    if(tradeType === "SELL" && finalPrice < strikePrice)
-        won = true;
-
-    if(won) {
-
-        // DYNAMIC PAYOUT
-        let multiplier =
-            getDynamicReward(1.8);
-
-        let payout =
-            currentBetCost * multiplier;
-
-        userBalance += payout;
-
-        document.getElementById('trade-status').style.color =
-            "var(--green)";
-
-        document.getElementById('trade-status').innerText =
-            `🎉 WIN! +${payout.toFixed(8)} ACAT`;
-
-    } else {
-
-        document.getElementById('trade-status').style.color =
-            "var(--red)";
-
-        document.getElementById('trade-status').innerText =
-            `❌ LOSE! -${currentBetCost} ACAT`;
-    }
-
-    document.getElementById('balance-view').innerText =
-        Number(userBalance).toLocaleString();
-
-    await updateFirebase({
-        points: userBalance
-    });
-}
-
-
-/* ===============================
-   WITHDRAW UPDATED
-================================= */
-
+```javascript
 async function submitWithdraw(){
 
     const walletAddr =
-        document.getElementById('wallet-input-field')
-        .value
-        .trim();
+        document.getElementById('wallet-input-field').value.trim();
 
     const amount =
-        parseFloat(
-            document.getElementById('withdraw-amount').value
-        );
+        parseFloat(document.getElementById('withdraw-amount').value);
+
+    const dynamicMinimum = getDynamicWithdrawMinimum();
 
     if(
         !walletAddr ||
         !walletAddr.startsWith("0x") ||
         walletAddr.length !== 42
     ) {
+        alert("❌ Error: Invalid BEP20 Address");
+        return;
+    }
 
-        alert("❌ Invalid BEP20 Address");
+    if(isNaN(amount) || amount < dynamicMinimum){
+
+        alert(`❌ Minimum Withdraw is ${dynamicMinimum} ACAT`);
 
         return;
     }
 
-    // MINIMUM
-    if(isNaN(amount) || amount < 100000){
-
-        alert("❌ Minimum withdrawal is 100,000 ACAT");
-
-        return;
-    }
-
-    // SECURE DEDUCTION
-    const deducted =
-        await deductBalance(amount);
+    const deducted = await deductBalance(amount);
 
     if(!deducted)
         return;
 
     await updateFirebase({
         points: userBalance,
-        wallet: walletAddr,
-        last_withdraw: amount,
-        last_withdraw_time: Date.now()
+        wallet: walletAddr
     });
 
     alert("🚀 Withdrawal Ledger Synchronized!");
 }
+```
+
+---
+
+# Final Dynamic Economy Result
+
+## Initially
+
+* Welcome Bonus → 5000 ACAT
+* Mining → 100 ACAT/hour
+* Game Reward → ~1 ACAT+
+* Referral → 100 ACAT
+* Withdraw Minimum → 1000 ACAT
+* 1 USD → 25,000 ACAT
+
+## As Users Increase Toward 1,000,000
+
+Everything automatically decreases like Bitcoin/Satoshi scarcity system:
+
+* Mining reward drops
+* Game reward drops
+* Referral drops
+* Buy rate drops
+* Withdraw minimum drops
+
+This creates:
+
+* Scarcity
+* Controlled supply
+* Anti-inflation economy
+* Long-term token survival
+* Early-user advantage
