@@ -40,7 +40,7 @@
         .logo-main { width: clamp(180px, 40vw, 280px); max-width: 70%; height: auto; filter: drop-shadow(0 0 40px rgba(0,229,255,0.4)); animation: float 6s infinite ease-in-out; }
         @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
 
-        h1 { font-family: 'Orbitron'; font-size: clamp(2rem, 8vw, 6rem); color: #fff; text-shadow: 0 0 20px var(--primary); letter-spacing: clamp(3px, 2vw, 10px); margin-bottom: 10px; width: 100%; word-wrap: break-word; line-height: 1.1; }
+        <h1> { font-family: 'Orbitron'; font-size: clamp(2rem, 8vw, 6rem); color: #fff; text-shadow: 0 0 20px var(--primary); letter-spacing: clamp(3px, 2vw, 10px); margin-bottom: 10px; width: 100%; word-wrap: break-word; line-height: 1.1; }
 
         /* Stats Grid */
         .grid-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; width: 100%; max-width: 1000px; margin-top: 40px; }
@@ -108,9 +108,15 @@
         <h1 class="hidden">EXECUTE</h1>
 
         <div style="background: rgba(255,255,255,0.01); border: 1px solid var(--primary); padding: 30px 20px; border-radius: 20px; backdrop-filter: blur(10px); margin-bottom: 30px; min-width: 280px; display: inline-block; position: relative; z-index: 10;">
-            <h3 style="color: var(--primary); font-family: 'Orbitron'; margin-bottom: 15px; font-size: 1.1rem; letter-spacing: 1px;">MINING AIRDROP STATUS</h3>
-            <p id="mining-status" style="color: #fff; font-size: 1.1rem; font-weight: bold; margin-bottom: 15px;">Wallet Not Connected</p>
-            <button id="claim-btn" class="btn-trade btn-outline" style="padding: 10px 25px; font-size: 0.9rem; min-width: 200px; cursor: pointer; border-radius: 50px;" onclick="connectWallet()">CONNECT WALLET</button>
+            <div id="mining-entry-zone">
+                <h3 style="color: var(--primary); font-family: 'Orbitron'; margin-bottom: 15px; font-size: 1.1rem; letter-spacing: 1px;">FREE MINING MODE</h3>
+                <p style="color: #fff; font-size: 0.9rem; margin-bottom: 15px; opacity: 0.7;">Click below to launch your node validator console.</p>
+                <button class="btn-trade" style="background: var(--primary); color: #000; font-size: 1rem; padding: 12px 30px; min-width: 220px;" onclick="activateMiningPortal(this)">
+                    START MINING
+                </button>
+            </div>
+            
+            <div id="aerocat-portal-root" style="display: none; margin-top: 10px;"></div>
         </div>
 
         <div class="btn-group hidden delay-2">
@@ -125,8 +131,10 @@
     <script>
         setTimeout(() => {
             const welcome = document.getElementById('welcome-screen');
-            welcome.style.opacity = '0';
-            setTimeout(() => welcome.style.display = 'none', 800);
+            if (welcome) {
+                welcome.style.opacity = '0';
+                setTimeout(() => welcome.style.display = 'none', 800);
+            }
         }, 2000); 
 
         const observer = new IntersectionObserver((entries) => {
@@ -162,80 +170,8 @@
                 }
             }
         });
-
-        // Web3 & Live Firebase Database Engine
-        let userWallet = null;
-        const databaseURL = "https://aero-cat-mining-default-rtdb.firebaseio.com/";
-
-        async function connectWallet() {
-            if (window.ethereum) {
-                try {
-                    const provider = new ethers.providers.Web3Provider(window.ethereum);
-                    await window.ethereum.request({ method: 'eth_requestAccounts' });
-                    const signer = provider.getSigner();
-                    userWallet = await signer.getAddress();
-                    
-                    document.getElementById('mining-status').innerText = "FETCHING BALANCES...";
-                    document.getElementById('mining-status').style.color = "#ffffff";
-                    
-                    try {
-                        const response = await fetch(`${databaseURL}users.json`);
-                        const allUsers = await response.json();
-                        
-                        let foundPoints = 0;
-                        let userKey = null;
-                        
-                        if (allUsers) {
-                            for (const id in allUsers) {
-                                if (allUsers[id].wallet && allUsers[id].wallet.toLowerCase() === userWallet.toLowerCase()) {
-                                    foundPoints = allUsers[id].points;
-                                    userKey = id;
-                                    break;
-                                }
-                            }
-                        }
-                        
-                        if (foundPoints > 0) {
-                            document.getElementById('mining-status').innerText = `${foundPoints.toLocaleString()} $ACAT Available to Claim`;
-                            document.getElementById('mining-status').style.color = "#00e5ff";
-                            
-                            const claimBtn = document.getElementById('claim-btn');
-                            claimBtn.innerText = "CLAIM TOKENS";
-                            claimBtn.onclick = () => claimTokens(userKey);
-                        } else {
-                            document.getElementById('mining-status').innerText = "0 $ACAT (Register wallet inside bot first)";
-                            document.getElementById('mining-status').style.color = "#ff003c";
-                            
-                            const claimBtn = document.getElementById('claim-btn');
-                            claimBtn.innerText = "NO DATA FOUND";
-                            claimBtn.onclick = null;
-                        }
-                        
-                    } catch (dbError) {
-                        document.getElementById('mining-status').innerText = "0 $ACAT (Database Empty)";
-                        document.getElementById('mining-status').style.color = "#ff003c";
-                    }
-                    
-                } catch (error) {
-                    alert("Connection rejected!");
-                }
-            } else {
-                alert("Please use the in-app browser of MetaMask or Trust Wallet!");
-            }
-        }
-
-        async function claimTokens(userKey) {
-            if (!userWallet) return;
-            const claimBtn = document.getElementById('claim-btn');
-            claimBtn.innerText = "PROCESSING...";
-            
-            setTimeout(() => {
-                alert("Claim Successful! Tokens will be delivered after gas verification.");
-                claimBtn.innerText = "CLAIMED";
-                claimBtn.onclick = null;
-                claimBtn.style.opacity = "0.5";
-            }, 2000);
-        }
     </script>
+
+    <script src="portal.js"></script>
 </body>
 </html>
