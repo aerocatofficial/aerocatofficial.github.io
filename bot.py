@@ -2,6 +2,7 @@ import os
 import threading
 import requests
 import json
+import asyncio
 import telebot
 from aiohttp import web
 
@@ -12,7 +13,7 @@ BOT_TOKEN = "8889229014:AAGUsskvyZFnHhmkN5ENqovVDkbdAKiDOvQ"
 bot = telebot.TeleBot(BOT_TOKEN)
 
 FIREBASE_URL = "https://aero-cat-mining-default-rtdb.firebaseio.com/users"
-WEB_PORTAL_URL = "https://aerocatofficial.github.io/"  # App Ka Web URL
+WEB_PORTAL_URL = "https://aerocatofficial.github.io/"  # App frontend connection link
 
 # ========================================== #
 # 1. TELEGRAM BOT HANDLERS                   #
@@ -26,12 +27,12 @@ def start_command(message):
         response = requests.get(f"{FIREBASE_URL}/{user_id}.json")
         user_data = response.json()
 
-        # WebApp Button Markup Create
+        # WebApp Inline Button Setup
         markup = telebot.types.InlineKeyboardMarkup()
         web_app_info = telebot.types.WebAppInfo(url=WEB_PORTAL_URL)
         markup.add(telebot.types.InlineKeyboardButton(text="⛏️ Open Aero Cat Hub", web_app=web_app_info))
 
-        # NEW USER
+        # NEW USER PROTOCOL
         if user_data is None:
             initial_points = 50000
             new_data = {
@@ -48,7 +49,7 @@ def start_command(message):
                 f"🛸 Click below to open your mining dashboard console:"
             )
 
-        # EXISTING USER
+        # EXISTING USER DATA FETCHING
         else:
             try:
                 current_points = int(user_data.get('points', 0))
@@ -99,36 +100,35 @@ def set_wallet(message):
         print("WALLET ERROR:", e)
 
 # ========================================== #
-# 2. RENDER KEEP-ALIVE WEB SERVER ROUTINE    #
+# 2. RAILWAY PORT PORTAL KEEPALIVE ENGINE    #
 # ========================================== #
-async def handle_render_ping(request):
-    return web.Response(text="[SYS] Aero Cat Operational Core is Healthy.")
+async def handle_railway_ping(request):
+    return web.Response(text="[ONLINE] Aero Cat Bot Framework is operational and listening to nodes.")
 
 def run_web_server():
     app = web.Application()
-    app.router.add_get('/', handle_render_ping)
-    # Render assigns port environment variable dynamically
+    app.router.add_get('/', handle_railway_ping)
+    # Railway automatically allocates dynamic ports via env variables
     port = int(os.environ.get("PORT", 8080))
     
-    # Run aiohttp web server loop synchronously inside thread
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
     runner = web.AppRunner(app)
     loop.run_until_complete(runner.setup())
     site = web.TCPSite(runner, '0.0.0.0', port)
     loop.run_until_complete(site.start())
-    print(f"[RENDER] Web keep-alive initialized on port {port}")
+    print(f"[RAILWAY] Server node bound on interface port: {port}")
     loop.run_forever()
 
 # ========================================== #
-# 3. MAIN RUNNER INFRASTRUCTURE             #
+# 3. CORE SYSTEM EXECUTOR                     #
 # ========================================== #
 if __name__ == "__main__":
-    print("Aero Cat System Initializing...")
+    print("[SYS] Initializing Aero Cat System Cores...")
     
-    # Thread block triggers keep-alive web router background task
+    # Detach web ping network into an independent daemon threat
     t = threading.Thread(target=run_web_server, daemon=True)
     t.start()
     
-    print("Aero Cat Bot is running flawlessly via Thread Escrow...")
+    print("[ACTIVE] Bot Core polling is actively handling server traffic...")
     bot.infinity_polling()
