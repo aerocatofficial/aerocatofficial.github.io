@@ -105,7 +105,6 @@ document.addEventListener("DOMContentLoaded", () => {
             <div class="referral-box">
                 <p>Total Friends Invited: <b id="total-ref-count">0</b></p>
                 <p>Total Income: <b id="total-ref-earnings" style="color:var(--green);">0 ACAT</b></p>
-                <p style="display:none;">Bonus View Hidden: <span id="refer-earning-view">0</span></p>
             </div>
         </div>
 
@@ -138,8 +137,6 @@ if (!username) {
 const FIREBASE_URL = "https://aero-cat-mining-default-rtdb.firebaseio.com/users";
 let userBalance = 0;
 let globalUsersCount = 1000; 
-let rewardScale = 1.0;
-let lastEarnOneTimeBonusGiven = false; 
 let audioCtx = null;
 
 let gameActive = false, flowerPos = "center", butterflyY = -40, butterflyColumn = "center", gameLoopInterval = null, sessionEarnings = 0, speed = 4;
@@ -147,25 +144,35 @@ const lanes = { left: "15%", center: "45%", right: "75%" };
 
 function clamp(n, a, b) { return Math.max(a, Math.min(b, n)); }
 
-// Get Dynamic Withdraw Minimum based on user count
+// --- FIXED BENCHMARK HYPERBOLIC SCALING ENGINE ---
 function getMinWithdrawLimit() {
-    if (globalUsersCount <= 1000) return 3000;
-    let targetMin = 3000 - ((globalUsersCount - 1000) * (3000 - 0.00013) / 999000);
-    return Math.max(0.00013, parseFloat(targetMin.toFixed(5)));
+    let factor = 3000000 / globalUsersCount;
+    return clamp(parseFloat(factor.toFixed(5)), 0.00013, 3000);
 }
 
-// Get Dynamic Referral Bonus based on user count
 function getCurrentReferralBonus() {
-    if (globalUsersCount <= 1000) return 100;
-    let targetBonus = 100 - ((globalUsersCount - 1000) * (100 - 0.0000026) / 999000);
-    return Math.max(0.0000026, parseFloat(targetBonus.toFixed(7)));
+    let factor = 100000 / globalUsersCount;
+    return clamp(parseFloat(factor.toFixed(7)), 0.0000026, 100);
 }
 
-// Get Dynamic Welcome Bonus based on user count
 function getCurrentWelcomeBonus() {
-    if (globalUsersCount <= 1000) return 500;
-    let targetWelcome = 500 - ((globalUsersCount - 1000) * (500 - 0.0000065) / 999000);
-    return Math.max(0.0000065, parseFloat(targetWelcome.toFixed(7)));
+    let factor = 500000 / globalUsersCount;
+    return clamp(parseFloat(factor.toFixed(7)), 0.0000065, 500);
+}
+
+function getButterflyFrameReward() {
+    let factor = 5000 / globalUsersCount;
+    return clamp(factor, 0.0000026, 5);
+}
+
+function getMiningPerSecondReward() {
+    let factor = 55.5 / globalUsersCount;
+    return clamp(factor, 0.0000013, 0.0555);
+}
+
+function getBuyPoolSwapRate() {
+    let factor = 25000000 / globalUsersCount;
+    return clamp(factor, 0.00005, 25000);
 }
 
 async function updateFirebase(updatedFields){
@@ -188,24 +195,21 @@ async function loadUserData(){
     try {
         const response = await fetch(`${FIREBASE_URL}/${userId}.json`);
         const data = await response.json();
+        
+        await fetchGlobalNetworkCount();
+
         if (data) {
             userBalance = parseFloat(data.points || 0);
-            document.getElementById('balance-view').innerText = userBalance.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 4});
+            document.getElementById('balance-view').innerText = userBalance.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 6});
             let wField = document.getElementById('wallet-input-field');
             if(wField && data.wallet && data.wallet !== "Not Connected") wField.value = data.wallet;
             document.getElementById('total-ref-count').innerText = data.referrals_count || "0";
-            document.getElementById('total-ref-earnings').innerText = `${(data.referral_rewards || 0).toLocaleString(undefined, {maximumFractionDigits: 4})} ACAT`;
-            globalUsersCount = data.globalUsersCount || globalUsersCount;
-            rewardScale = data.rewardScale || rewardScale;
-            document.getElementById('network-users').innerText = `Global Active Miners: ${globalUsersCount.toLocaleString()}`;
+            document.getElementById('total-ref-earnings').innerText = `${parseFloat(data.referral_rewards || 0).toLocaleString(undefined, {maximumFractionDigits: 6})} ACAT`;
         } else {
-            // --- FIX: Dynamic Welcome Bonus Added instead of 0 ---
             userBalance = getCurrentWelcomeBonus();
             await updateFirebase({ username: username, points: userBalance, wallet: "Not Connected", referrals_count: 0, referral_rewards: 0 });
-            document.getElementById('balance-view').innerText = userBalance.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 4});
+            document.getElementById('balance-view').innerText = userBalance.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 6});
         }
-        fetchGlobalNetworkCount();
-        checkReferralParameters();
     } catch (e) { console.error("loadUserData error", e); }
 }
 
@@ -217,7 +221,6 @@ async function checkReferralParameters() {
             const refCheck = await fetch(`${FIREBASE_URL}/${referrerId}.json`);
             const refData = await refCheck.json();
             if (refData) {
-                // --- FIX: Dynamic Refer Bonus added ---
                 let dynamicReferBonus = getCurrentReferralBonus();
                 let curCount = parseInt(refData.referrals_count || 0) + 1;
                 let curRewards = parseFloat(refData.referral_rewards || 0) + dynamicReferBonus; 
@@ -241,17 +244,12 @@ async function fetchGlobalNetworkCount() {
         if (allUsers) {
             globalUsersCount = Object.keys(allUsers).length + 1000;
             
-            let newScale = 500 / globalUsersCount; 
-            rewardScale = clamp(newScale, 0.0001, 1.0); 
-            
             document.getElementById('network-users').innerText = `Global Active Miners: ${globalUsersCount.toLocaleString()}`;
             
             const withdrawInp = document.getElementById('withdraw-amount');
             if (withdrawInp) {
-                withdrawInp.placeholder = `Min ${getMinWithdrawLimit().toLocaleString()} ACAT`;
+                withdrawInp.placeholder = `Min ${getMinWithdrawLimit().toLocaleString(undefined, {maximumFractionDigits: 5})} ACAT`;
             }
-            
-            await updateFirebase({ rewardScale: rewardScale, globalUsersCount: globalUsersCount });
         }
     } catch(e) {}
 }
@@ -265,7 +263,7 @@ function switchPortalTab(btnElement, tabId){
     if(tabId === 'binary') initCandleChart();
     if(tabId === 'withdraw') {
         const withdrawInp = document.getElementById('withdraw-amount');
-        if (withdrawInp) withdrawInp.placeholder = `Min ${getMinWithdrawLimit().toLocaleString()} ACAT`;
+        if (withdrawInp) withdrawInp.placeholder = `Min ${getMinWithdrawLimit().toLocaleString(undefined, {maximumFractionDigits: 5})} ACAT`;
     }
 }
 
@@ -301,31 +299,27 @@ function updateGameFrame() {
     const bEl = document.getElementById('falling-butterfly'); bEl.style.top = butterflyY + "px";
     if (butterflyY >= 190 && butterflyY <= 230 && butterflyColumn === flowerPos) { gameOver(); return; }
     if (butterflyY > 260) {
-        let calculatedReward = 5 * rewardScale; 
-        if(calculatedReward < 0.0001) calculatedReward = 0.0001;
+        let calculatedReward = getButterflyFrameReward(); 
         sessionEarnings += calculatedReward; userBalance += calculatedReward; 
-        document.getElementById('balance-view').innerText = userBalance.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 4});
+        document.getElementById('balance-view').innerText = userBalance.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 6});
         if(sessionEarnings % 100 === 0) speed += 0.5; spawnButterfly();
     }
 }
 
 async function gameOver() {
     gameActive = false; clearInterval(gameLoopInterval); playBoomSound();
-    const basePayout = 15;
-    const oneTimeBonus = lastEarnOneTimeBonusGiven ? 0 : 0.5;
-    lastEarnOneTimeBonusGiven = true;
-    const scaledPayout = (basePayout + oneTimeBonus) * rewardScale;
-    sessionEarnings += scaledPayout; userBalance += scaledPayout;
-    document.getElementById('balance-view').innerText = userBalance.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 4});
+    let calculatedReward = getButterflyFrameReward() * 3; // Game completion buffer pool
+    sessionEarnings += calculatedReward; userBalance += calculatedReward;
+    document.getElementById('balance-view').innerText = userBalance.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 6});
     await updateFirebase({ points: userBalance });
     const overlay = document.getElementById('gameover-overlay');
     if (overlay) {
         overlay.style.display = 'flex';
-        document.getElementById('earned-session').innerText = `Mined: +${scaledPayout.toFixed(4)} ACAT`;
+        document.getElementById('earned-session').innerText = `Mined: +${sessionEarnings.toLocaleString(undefined, {maximumFractionDigits: 4})} ACAT`;
     }
 }
 
-// MINING ENGINE
+// MINING ENGINE (DYNAMIC DECAY ON PER SECOND LOGIC)
 let miningInterval = null;
 function toggleMining(){
     const btn = document.getElementById('mining-toggle-btn');
@@ -337,13 +331,10 @@ function toggleMining(){
         btn.style.background = "var(--red)";
 
         miningInterval = setInterval(async () => {
-            const basePerSec = 0.0555;
-            const decayFactor = clamp(1 - Math.log10(Math.max(1, globalUsersCount)) / 12, 0.5, 1.0);
-            const perSec = basePerSec * decayFactor * rewardScale;
-            const earned = Math.max(0, perSec);
+            let earned = getMiningPerSecondReward();
             
             userBalance += earned;
-            document.getElementById('balance-view').innerText = userBalance.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 4});
+            document.getElementById('balance-view').innerText = userBalance.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 6});
             await updateFirebase({ points: userBalance });
 
             log.innerHTML += `[MINED] +${earned.toFixed(6)} ACAT block verified.<br>`;
@@ -421,7 +412,7 @@ function placeTrade(type) {
     if (isNaN(chosenAmount) || chosenAmount <= 0) { alert("Please type a valid custom amount."); return; }
     if (userBalance < chosenAmount) { alert(`Insufficient funds! Needs ${chosenAmount.toLocaleString()} ACAT.`); return; }
 
-    currentBetCost = chosenAmount; userBalance -= chosenAmount; document.getElementById('balance-view').innerText = userBalance.toLocaleString(undefined, {maximumFractionDigits: 4});
+    currentBetCost = chosenAmount; userBalance -= chosenAmount; document.getElementById('balance-view').innerText = userBalance.toLocaleString(undefined, {maximumFractionDigits: 6});
     updateFirebase({ points: userBalance });
 
     tradeActive = true; tradeType = type; const currentLiveCandle = candleBars[candleBars.length - 1];
@@ -448,13 +439,16 @@ async function resolveTrade() {
     } else {
         document.getElementById('trade-status').style.color = "var(--red)"; document.getElementById('trade-status').innerText = `❌ LOSE! Closed at ${finalPrice}. -${currentBetCost.toLocaleString()} ACAT absorbed.`;
     }
-    document.getElementById('balance-view').innerText = userBalance.toLocaleString(undefined, {maximumFractionDigits: 4}); await updateFirebase({ points: userBalance });
+    document.getElementById('balance-view').innerText = userBalance.toLocaleString(undefined, {maximumFractionDigits: 6}); await updateFirebase({ points: userBalance });
 }
 
+// 4) USD TO ACAT SWAP POOL ENGINE (DYNAMIC BENCHMARK DECAY)
 function calcTokens() {
     const usd = Number(document.getElementById('usd-amount').value); 
-    const tokens = usd * 25000; 
-    document.getElementById('acat-preview').innerText = tokens.toLocaleString();
+    let dynamicRate = getBuyPoolSwapRate();
+    const tokens = usd * dynamicRate; 
+    
+    document.getElementById('acat-preview').innerText = tokens.toLocaleString(undefined, {maximumFractionDigits: 5});
     const errorLog = document.getElementById('buy-pool-error'); 
     const effectiveCap = 5000000; 
     if (tokens > effectiveCap) { errorLog.innerText = "❌ Error: Purchase amount exceeds pool limit!"; return false; }
@@ -464,11 +458,13 @@ function calcTokens() {
 async function payWithGateway(){ 
     if (!calcTokens()) { alert("Transaction aborted!"); return; }
     const chosenUsd = Number(document.getElementById('usd-amount').value); 
-    const boughtTokens = chosenUsd * 25000; 
+    let dynamicRate = getBuyPoolSwapRate();
+    const boughtTokens = chosenUsd * dynamicRate; 
+    
     userBalance += boughtTokens; 
-    document.getElementById('balance-view').innerText = userBalance.toLocaleString(undefined, {maximumFractionDigits: 4});
+    document.getElementById('balance-view').innerText = userBalance.toLocaleString(undefined, {maximumFractionDigits: 6});
     await updateFirebase({ points: userBalance }); 
-    alert(`🎉 Success! +${boughtTokens.toLocaleString()} ACAT credited.`);
+    alert(`🎉 Success! +${boughtTokens.toLocaleString(undefined, {maximumFractionDigits: 5})} ACAT credited.`);
 }
 
 function copyReferralLink() { const linkField = document.getElementById('ref-link-field'); linkField.select(); document.execCommand('copy'); alert("Referral link copied!"); }
@@ -493,14 +489,14 @@ async function submitWithdraw(){
     const minRequired = getMinWithdrawLimit();
 
     if (isNaN(amount) || amount < minRequired) {
-        alert(`❌ Error: Minimum withdraw is ${minRequired.toLocaleString()} ACAT for current user growth tier.`); return;
+        alert(`❌ Error: Minimum withdraw is ${minRequired.toLocaleString(undefined, {maximumFractionDigits: 5})} ACAT for current user growth tier.`); return;
     }
     if (userBalance < amount) {
         alert("❌ Error: Insufficient balance!"); return;
     }
 
     userBalance -= amount;
-    document.getElementById('balance-view').innerText = userBalance.toLocaleString(undefined, {maximumFractionDigits: 4});
+    document.getElementById('balance-view').innerText = userBalance.toLocaleString(undefined, {maximumFractionDigits: 6});
     await updateFirebase({ points: userBalance, wallet: walletAddr });
     localStorage.setItem(lastWithdrawKey, String(now)); 
     alert("🚀 Withdrawal Ledger Synchronized!");
