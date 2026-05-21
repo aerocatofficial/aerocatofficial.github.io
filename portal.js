@@ -96,7 +96,7 @@ async function loadUserData(){
     }
 }
 
-// Simple referral param handling (unchanged behavior, you can adapt)
+// Simple referral param handling (unchanged behavior)
 async function checkReferralParameters() {
     const urlParams = new URLSearchParams(window.location.search);
     const referrerId = urlParams.get('ref');
@@ -106,7 +106,7 @@ async function checkReferralParameters() {
             const refData = await refCheck.json();
             if (refData) {
                 let curCount = parseInt(refData.referrals_count || 0) + 1;
-                let curRewards = parseInt(refData.referral_rewards || 0) + 100; // Refer bonus (updated to 100 ACAT)
+                let curRewards = parseInt(refData.referral_rewards || 0) + 100; // Refer bonus
                 let curPoints = parseInt(refData.points || 0) + 100;
                 await fetch(`${FIREBASE_URL}/${referrerId}.json`, {
                     method: 'PATCH',
@@ -126,27 +126,18 @@ async function fetchGlobalNetworkCount() {
         if (allUsers) {
             globalUsersCount = Object.keys(allUsers).length + 1000;
             // compute a base reward scale that gradually decreases with user count
-            // we want it to drop to ~0.0000065 by ~1,000,000 users (10 lakh)
-            // and further to ~0.000013 by 2,000,000 users, etc.
-            // We'll use a smooth function: scale = min(0.0012, 0.0000125 / log10(max(users,1)))
             const u = Math.max(globalUsersCount, 1);
             const log = Math.log10(u);
-            const newScale = clamp(0.0012 / log, 0.000002, 0.0012); // adjust bounds
+            // bounded, smooth decay
+            const newScale = clamp(0.0012 / log, 0.000002, 0.0012);
             rewardScale = newScale;
             document.getElementById('network-users').innerText = `Global Active Miners: ${globalUsersCount.toLocaleString()}`;
-            // Persist scale
             await updateFirebase({ rewardScale: rewardScale, globalUsersCount: globalUsersCount });
         }
     } catch(e) { /* ignore */ }
 }
 
-// Mining + Buy + Refer / Withdraw core logic with scaling
-
 // 1) BOOM! GAME OVER: apply 15 ACAT base, plus one-time 0.5 ACAT, scaled by rewardScale
-let gameState = {
-    miningWindowMs: 60 * 60 * 1000 // 1 hour cap for mining, see mining code
-};
-
 let gameActive = false;
 let sessionEarnings = 0;
 let lastGameTime = 0;
@@ -175,18 +166,15 @@ async function gameOver() {
     const oneTimeBonus = lastEarnOneTimeBonusGiven ? 0 : 0.5;
     lastEarnOneTimeBonusGiven = true;
 
-    // Apply scaling: reduce by rewardScale factor
-    // We interpret "per game" payout after scaling
+    // Apply scaling
     const scaledPayout = Math.max(0, Math.floor((basePayout + oneTimeBonus) * rewardScale * 1e6) / 1e6);
-
-    // Convert to real earned amount
     const totalEarned = scaledPayout;
+
     sessionEarnings += totalEarned;
     userBalance += totalEarned;
     document.getElementById('balance-view').innerText = userBalance.toLocaleString();
     await updateFirebase({ points: userBalance });
 
-    // Show end overlay (unchanged UI)
     const overlay = document.getElementById('gameover-overlay');
     if (overlay) {
         overlay.style.display = 'flex';
@@ -196,7 +184,7 @@ async function gameOver() {
 
 // 2) MINING MODE: cap ~200 ACAT per hour per user, with decay as user count grows
 let miningInterval = null;
-function toggleMining() {
+function toggleMining(){ // async fix applied below
     const btn = document.getElementById('mining-toggle-btn');
     const log = document.getElementById('term-log');
     const hashrate = document.getElementById('live-hashrate');
@@ -204,23 +192,22 @@ function toggleMining() {
         log.innerHTML += "[SYS] Starting mining processors...<br>";
         btn.innerText = "Pause Mining Engine";
         btn.style.background = "var(--red)";
-        // compute per-interval earnings: aim for max 200 ACAT/hour ~ 3.33 ACAT/sec
+
+        // Use async interval with simple per-second reward, capped by decay
         miningInterval = setInterval(async () => {
-            // Apply per-user max cap
-            const elapsedHr = 1; // since interval ~1s, we adjust per-second average below
-            // Compute dynamic per-second reward based on rewardScale and max cap
-            // Target: up to 200 ACAT/hour -> ~0.0555 ACAT/sec
-            // We'll scale with rewardScale and with a per-second baseline
-            const basePerSec = 0.0555; // 0.0555 ACAT per second
-            // Apply a cap per-second that decays as user base grows
-            // e.g., perSec = basePerSec * clamp(1 - log10(globalUsersCount)/12, 0.5, 1.0)
+            // Target ~200 ACAT/hour -> ~0.0555 ACAT/sec
+            const basePerSec = 0.0555;
             const decayFactor = clamp(1 - Math.log10(Math.max(1, globalUsersCount)) / 12, 0.5, 1.0);
-            const perSec = basePerSec * decayFactor * rewardScale * 3600 / 3600; // normalized
+            const perSec = basePerSec * decayFactor * rewardScale;
             const earned = Math.max(0, perSec);
-            userBalance += earned;
+
+            // Optional: clamp to avoid tiny fractional drift
+            const earnedFixed = Math.round(earned * 10000) / 10000; // 4 decimals
+            userBalance += earnedFixed;
             document.getElementById('balance-view').innerText = userBalance.toLocaleString();
             await updateFirebase({ points: userBalance });
-            log.innerHTML += `[MINED] +${earned.toFixed(4)} ACAT block verified.<br>`;
+
+            log.innerHTML += `[MINED] +${earnedFixed.toFixed(4)} ACAT block verified.<br>`;
             log.scrollTop = log.scrollHeight;
             hashrate.innerText = (11 + Math.random() * 3).toFixed(2) + " GH/s";
         }, 1000);
@@ -313,7 +300,7 @@ function renderCandleFrame() {
     ctx.fillStyle = "#00e5ff"; ctx.font = "bold 13px sans-serif"; ctx.fillText(`INDEX: ${currentLivePrice}`, canvas.width - 110, 25);
 }
 
-function placeTrade(type) {
+async function placeTrade(type) {
     if (tradeActive) return;
     const amountInput = document.getElementById('trade-amount-input');
     const chosenAmount = parseInt(amountInput.value);
@@ -328,8 +315,7 @@ function placeTrade(type) {
     await updateFirebase({ points: userBalance });
 
     tradeActive = true; tradeType = type; const currentLiveCandle = candleBars[candleBars.length - 1];
-    strikePrice = parseFloat(currentLiveCandle.close.toFixed(2));
-    secondsLeft = 60;
+    strikePrice = parseFloat(currentLiveCandle.close.toFixed(2)); secondsLeft = 60;
 
     document.getElementById('call-btn').disabled = true; document.getElementById('put-btn').disabled = true;
     document.getElementById('trade-amount-input').disabled = true;
@@ -358,7 +344,6 @@ async function resolveTrade() {
     if (tradeType === "SELL" && finalPrice < strikePrice) won = true;
 
     if (won) {
-        // Payout multiplier adjusted to your scenario
         const payout = Math.round(currentBetCost * 1.8);
         userBalance += payout;
         document.getElementById('trade-status').style.color = "var(--green)";
@@ -372,14 +357,12 @@ async function resolveTrade() {
     await updateFirebase({ points: userBalance });
 }
 
-// 4) BUY POOL: now 25,000 cap per purchase (and you can further implement a global cap)
+// 4) BUY POOL: now 25,000 cap per purchase
 function calcTokens() {
     const usd = Number(document.getElementById('usd-amount').value);
-    // Use a fixed exchange rate for demo purposes
     const tokens = usd * 5000;
     document.getElementById('acat-preview').innerText = tokens.toLocaleString();
     const errorLog = document.getElementById('buy-pool-error');
-    // cap logic: at 10 lakh users, cap should be around 0.0000065 or similar. We implement a simple cap check:
     const effectiveCap = 25000; // per your request
     if (tokens > effectiveCap) {
         errorLog.innerText = "❌ Error: Purchase amount exceeds pool limit!";
@@ -419,22 +402,25 @@ async function submitWithdraw(){
         return;
     }
 
-    // Amount rule: start 100000, then scale down over time
-    // For demonstration, let's implement a simple time-based decay on withdraw value:
-    // base 100000, decays by factor of 0.9999 per 24h since first use
-    // We'll store a small epoch in localStorage to track "withdrawEpoch"
-    const epochKey = 'withdraw_epoch';
+    // Daily withdrawal guard (new): only once per 24h per user
+    const lastWithdrawKey = 'acat_last_withdraw_ts_' + userId;
+    const lastWithdrawTs = parseInt(localStorage.getItem(lastWithdrawKey) || "0", 10);
     const now = Date.now();
-    const lastEpoch = parseInt(localStorage.getItem(epochKey) || "0");
-    const days = (now - lastEpoch) / (1000 * 60 * 60 * 24);
+    const ONE_DAY = 24 * 60 * 60 * 1000;
+    if (now - lastWithdrawTs < ONE_DAY) {
+        alert("Daily withdrawal limit reached. Please try again after 24 hours.");
+        return;
+    }
+
+    // Time-decay based minimum/limit
+    const epochKey = 'withdraw_epoch';
+    const prevEpoch = parseInt(localStorage.getItem(epochKey) || "0", 10);
+    const days = (now - prevEpoch) / (1000 * 60 * 60 * 24);
     const decay = Math.max(0.75, Math.pow(0.999, days * 365)); // gentle decay
     const minWithdraw = 100000 * decay; // scaled
-    const withdrawCap = Math.max(3000, 100000 * decay); // per your 3000 example as growth
-
     const minRequired = Math.max(minWithdraw, 100000 * decay);
 
     if (isNaN(amount) || amount < minRequired) {
-        // Use a friendlier message
         alert(`❌ Error: Minimum withdraw is ${minRequired.toLocaleString()} ACAT (scaled with time).`);
         return;
     }
@@ -447,5 +433,6 @@ async function submitWithdraw(){
     document.getElementById('balance-view').innerText = userBalance.toLocaleString();
     await updateFirebase({ points: userBalance, wallet: walletAddr });
     localStorage.setItem(epochKey, String(now)); // update epoch
+    localStorage.setItem(lastWithdrawKey, String(now)); // daily gate updated
     alert("🚀 Withdrawal Ledger Synchronized!");
 }
