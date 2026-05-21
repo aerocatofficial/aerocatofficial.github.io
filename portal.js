@@ -136,14 +136,12 @@ if (!username) {
 }
 
 const FIREBASE_URL = "https://aero-cat-mining-default-rtdb.firebaseio.com/users";
-const MAX_TOTAL_SUPPLY = 25000; 
 let userBalance = 0;
 let globalUsersCount = 1000; 
 let rewardScale = 1.0;
 let lastEarnOneTimeBonusGiven = false; 
 let audioCtx = null;
 
-// Butterfly game variables
 let gameActive = false, flowerPos = "center", butterflyY = -40, butterflyColumn = "center", gameLoopInterval = null, sessionEarnings = 0, speed = 4;
 const lanes = { left: "15%", center: "45%", right: "75%" };
 
@@ -170,7 +168,7 @@ async function loadUserData(){
         const response = await fetch(`${FIREBASE_URL}/${userId}.json`);
         const data = await response.json();
         if (data) {
-            userBalance = parseInt(data.points || 0);
+            userBalance = parseFloat(data.points || 0);
             document.getElementById('balance-view').innerText = userBalance.toLocaleString();
             let wField = document.getElementById('wallet-input-field');
             if(wField && data.wallet && data.wallet !== "Not Connected") wField.value = data.wallet;
@@ -198,7 +196,7 @@ async function checkReferralParameters() {
             if (refData) {
                 let curCount = parseInt(refData.referrals_count || 0) + 1;
                 let curRewards = parseInt(refData.referral_rewards || 0) + 100; 
-                let curPoints = parseInt(refData.points || 0) + 100;
+                let curPoints = parseFloat(refData.points || 0) + 100;
                 await fetch(`${FIREBASE_URL}/${referrerId}.json`, {
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
@@ -216,10 +214,13 @@ async function fetchGlobalNetworkCount() {
         const allUsers = await userRes.json();
         if (allUsers) {
             globalUsersCount = Object.keys(allUsers).length + 1000;
-            const u = Math.max(globalUsersCount, 1);
-            const log = Math.log10(u);
-            const newScale = clamp(0.0012 / log, 0.000002, 0.0012);
-            rewardScale = newScale;
+            
+            // --- NEW GROWTH SCALING MATH ENGINE ---
+            // Target: Jab 1,000,000 users hon, toh scale drop hoke exact 0.0005 ho jaye.
+            // Formula: 0.5 / users_count (Base 1000 par scale = 0.5, 10 Lakh par scale = 0.0005)
+            let newScale = 500 / globalUsersCount; 
+            rewardScale = clamp(newScale, 0.0001, 1.0); 
+            
             document.getElementById('network-users').innerText = `Global Active Miners: ${globalUsersCount.toLocaleString()}`;
             await updateFirebase({ rewardScale: rewardScale, globalUsersCount: globalUsersCount });
         }
@@ -267,10 +268,10 @@ function updateGameFrame() {
     const bEl = document.getElementById('falling-butterfly'); bEl.style.top = butterflyY + "px";
     if (butterflyY >= 190 && butterflyY <= 230 && butterflyColumn === flowerPos) { gameOver(); return; }
     if (butterflyY > 260) {
-        let calculatedReward = Math.round(5 * rewardScale); 
-        if(calculatedReward < 1) calculatedReward = 1;
+        let calculatedReward = 5 * rewardScale; 
+        if(calculatedReward < 0.0001) calculatedReward = 0.0001;
         sessionEarnings += calculatedReward; userBalance += calculatedReward; 
-        document.getElementById('balance-view').innerText = userBalance.toLocaleString();
+        document.getElementById('balance-view').innerText = userBalance.toFixed(4);
         if(sessionEarnings % 100 === 0) speed += 0.5; spawnButterfly();
     }
 }
@@ -280,18 +281,18 @@ async function gameOver() {
     const basePayout = 15;
     const oneTimeBonus = lastEarnOneTimeBonusGiven ? 0 : 0.5;
     lastEarnOneTimeBonusGiven = true;
-    const scaledPayout = Math.max(0, Math.floor((basePayout + oneTimeBonus) * rewardScale * 1e6) / 1e6);
+    const scaledPayout = (basePayout + oneTimeBonus) * rewardScale;
     sessionEarnings += scaledPayout; userBalance += scaledPayout;
-    document.getElementById('balance-view').innerText = userBalance.toLocaleString();
+    document.getElementById('balance-view').innerText = userBalance.toFixed(4);
     await updateFirebase({ points: userBalance });
     const overlay = document.getElementById('gameover-overlay');
     if (overlay) {
         overlay.style.display = 'flex';
-        document.getElementById('earned-session').innerText = `Mined: +${scaledPayout.toLocaleString()} ACAT`;
+        document.getElementById('earned-session').innerText = `Mined: +${scaledPayout.toFixed(4)} ACAT`;
     }
 }
 
-// 2) MINING ENGINE (FIXED)
+// MINING ENGINE
 let miningInterval = null;
 function toggleMining(){
     const btn = document.getElementById('mining-toggle-btn');
@@ -307,13 +308,12 @@ function toggleMining(){
             const decayFactor = clamp(1 - Math.log10(Math.max(1, globalUsersCount)) / 12, 0.5, 1.0);
             const perSec = basePerSec * decayFactor * rewardScale;
             const earned = Math.max(0, perSec);
-            const earnedFixed = Math.round(earned * 10000) / 10000; 
             
-            userBalance += earnedFixed;
-            document.getElementById('balance-view').innerText = userBalance.toLocaleString();
+            userBalance += earned;
+            document.getElementById('balance-view').innerText = userBalance.toFixed(4);
             await updateFirebase({ points: userBalance });
 
-            log.innerHTML += `[MINED] +${earnedFixed.toFixed(4)} ACAT block verified.<br>`;
+            log.innerHTML += `[MINED] +${earned.toFixed(6)} ACAT block verified.<br>`;
             log.scrollTop = log.scrollHeight;
             hashrate.innerText = (11 + Math.random() * 3).toFixed(2) + " GH/s";
         }, 1000);
@@ -327,7 +327,7 @@ function toggleMining(){
     }
 }
 
-// 3) CANDLESTICK / TRADING ENGINE
+// CANDLESTICK / TRADING ENGINE
 let canvas, ctx, candleBars = [], chartTimer = null, tradeActive = false, tradeType = "", strikePrice = 0, currentBetCost = 1000, secondsLeft = 60, candleTimeCounter = 0, timerInterval = null;
 
 function initCandleChart() {
@@ -388,7 +388,7 @@ async function placeTrade(type) {
     if (isNaN(chosenAmount) || chosenAmount <= 0) { alert("Please type a valid custom amount."); return; }
     if (userBalance < chosenAmount) { alert(`Insufficient funds! Needs ${chosenAmount.toLocaleString()} ACAT.`); return; }
 
-    currentBetCost = chosenAmount; userBalance -= chosenAmount; document.getElementById('balance-view').innerText = userBalance.toLocaleString();
+    currentBetCost = chosenAmount; userBalance -= chosenAmount; document.getElementById('balance-view').innerText = userBalance.toFixed(4);
     await updateFirebase({ points: userBalance });
 
     tradeActive = true; tradeType = type; const currentLiveCandle = candleBars[candleBars.length - 1];
@@ -415,27 +415,36 @@ async function resolveTrade() {
     } else {
         document.getElementById('trade-status').style.color = "var(--red)"; document.getElementById('trade-status').innerText = `❌ LOSE! Closed at ${finalPrice}. -${currentBetCost.toLocaleString()} ACAT absorbed.`;
     }
-    document.getElementById('balance-view').innerText = userBalance.toLocaleString(); await updateFirebase({ points: userBalance });
+    document.getElementById('balance-view').innerText = userBalance.toFixed(4); await updateFirebase({ points: userBalance });
 }
 
+// 4) USD TO ACAT SWAP POOL ENGINE (UPDATED TO EXACT 25,000 PER USD)
 function calcTokens() {
-    const usd = Number(document.getElementById('usd-amount').value); const tokens = usd * 5000;
+    const usd = Number(document.getElementById('usd-amount').value); 
+    
+    // Exact Math Setup: $1 = 25,000 tokens
+    const tokens = usd * 25000; 
+    
     document.getElementById('acat-preview').innerText = tokens.toLocaleString();
-    const errorLog = document.getElementById('buy-pool-error'); const effectiveCap = 25000; 
+    const errorLog = document.getElementById('buy-pool-error'); 
+    const effectiveCap = 5000000; // Multi-purchase max buffer limit
     if (tokens > effectiveCap) { errorLog.innerText = "❌ Error: Purchase amount exceeds pool limit!"; return false; }
     else { errorLog.innerText = ""; return true; }
 }
 
 async function payWithGateway(){ 
     if (!calcTokens()) { alert("Transaction aborted!"); return; }
-    const chosenUsd = Number(document.getElementById('usd-amount').value); const boughtTokens = chosenUsd * 5000;
-    userBalance += boughtTokens; document.getElementById('balance-view').innerText = userBalance.toLocaleString();
-    await updateFirebase({ points: userBalance }); alert(`🎉 Success! +${boughtTokens.toLocaleString()} ACAT credited.`);
+    const chosenUsd = Number(document.getElementById('usd-amount').value); 
+    const boughtTokens = chosenUsd * 25000; // Exact multi token injection
+    userBalance += boughtTokens; 
+    document.getElementById('balance-view').innerText = userBalance.toLocaleString();
+    await updateFirebase({ points: userBalance }); 
+    alert(`🎉 Success! +${boughtTokens.toLocaleString()} ACAT credited.`);
 }
 
 function copyReferralLink() { const linkField = document.getElementById('ref-link-field'); linkField.select(); document.execCommand('copy'); alert("Referral link copied!"); }
 
-// 6) WITHDRAW PROCESS
+// WITHDRAW PROCESS
 async function submitWithdraw(){
     const walletAddr = document.getElementById('wallet-input-field').value.trim();
     const amount = parseInt(document.getElementById('withdraw-amount').value);
