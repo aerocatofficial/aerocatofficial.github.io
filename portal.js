@@ -380,7 +380,9 @@ function toggleMining(){
 let canvas, ctx, candleBars = [], chartTimer = null, tradeActive = false, tradeType = "", strikePrice = 0, currentBetCost = 1000, secondsLeft = 60, candleTimeCounter = 0, timerInterval = null;
 
 function initCandleChart() {
-    canvas = document.getElementById('chart-canvas'); ctx = canvas.getContext('2d');
+    canvas = document.getElementById('chart-canvas'); 
+    if (!canvas) return;
+    ctx = canvas.getContext('2d');
     if (candleBars.length === 0) {
         let seedClose = 140.20;
         for (let i = 0; i < 15; i++) {
@@ -394,9 +396,14 @@ function initCandleChart() {
 }
 
 function renderCandleFrame() {
-    if (!ctx) return; ctx.clearRect(0, 0, canvas.width, canvas.height);
+    canvas = document.getElementById('chart-canvas');
+    if (!canvas) return;
+    ctx = canvas.getContext('2d');
+    if (!ctx) return; 
+    
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.strokeStyle = "#161b22"; ctx.lineWidth = 1;
-    for (let i = 0; i < canvas.height; i += 25) { ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(canvas.width, i); stroke(); }
+    for (let i = 0; i < canvas.height; i += 25) { ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(canvas.width, i); ctx.stroke(); }
 
     candleTimeCounter++; const currentCandle = candleBars[candleBars.length - 1];
     const tickChange = tradeActive ? ((tradeType === "BUY") ? (Math.random() * 4 - 2.5) : (Math.random() * 4 - 1.5)) : (Math.random() * 6 - 3);
