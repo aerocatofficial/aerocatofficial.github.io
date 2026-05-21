@@ -19,15 +19,13 @@ def keep_alive():
     t = Thread(target=run, daemon=True)
     t.start()
 
-keep_alive()  # Keeps the bot process alive on hosting platforms
-
+keep_alive()
 # -------------------------
 
-# Use environment variable for token for safety
-BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "YOUR_DEFAULT_OR_FALLBACK_TOKEN_IF_NEEDED")
+# --- BOT CONFIGURATION ---
+BOT_TOKEN = "8889229014:AAGurjtXomP360q_kqZkvYn9CSWzEVuiB2w"
 bot = telebot.TeleBot(BOT_TOKEN)
 
-# Firebase and portal URLs (keep as-is or turn into env vars too)
 FIREBASE_URL = "https://aero-cat-mining-default-rtdb.firebaseio.com/users"
 WEB_PORTAL_URL = "https://aerocatofficial.github.io/"
 
@@ -37,15 +35,15 @@ def start_command(message):
         user_id = str(message.from_user.id)
         username = (message.from_user.username or "Anonymous")
 
-        # Safe fetch; Firebase returns null if not exists
         response = requests.get(f"{FIREBASE_URL}/{user_id}.json")
         user_data = response.json() if response.ok else None
 
         markup = telebot.types.InlineKeyboardMarkup()
         web_app_info = telebot.types.WebAppInfo(url=WEB_PORTAL_URL)
+        
         markup.add(telebot.types.InlineKeyboardButton(text="⛏️ Open Aero Cat Hub", web_app=web_app_info))
         markup.add(
-            telebot.types.InlineKeyboardButton(text="📢 WhatsApp Channel", url="https://wa.me/your-number"),
+            telebot.types.InlineKeyboardButton(text="📢 WhatsApp Channel", url="https://whatsapp.com/channel/0029Vb88Z3ABKfhrcBWys11W"),
             telebot.types.InlineKeyboardButton(text="𝕏 Follow on X", url="https://x.com/AerocatTeam")
         )
 
@@ -53,7 +51,6 @@ def start_command(message):
             new_data = {'username': username, 'points': 0, 'wallet': 'Not Connected'}
             requests.put(f"{FIREBASE_URL}/{user_id}.json", json=new_data)
             welcome_text = (f"✈️ <b>Welcome to Aero Cat Mining, @{username}!</b>\n\n"
-                            f"Aero Cat Mining Network is now live! Join our community.\n\n"
                             f"Mining is simple—just click the button below.")
         else:
             welcome_text = (f"👋 <b>Welcome Back, @{username}</b>\n\n"
@@ -76,14 +73,13 @@ def set_wallet(message):
             bot.reply_to(message, "❌ Invalid wallet address format!")
             return
 
-        # Patch wallet field for the user
         user_id = message.from_user.id
         patch_resp = requests.patch(f"{FIREBASE_URL}/{user_id}.json", json={'wallet': addr})
 
         if patch_resp.ok:
             bot.reply_to(message, f"✅ <b>Wallet Linked:</b>\n<code>{addr}</code>", parse_mode="HTML")
         else:
-            bot.reply_to(message, "❌ Failed to link wallet. Please try again later.")
+            bot.reply_to(message, "❌ Failed to link wallet.")
     except Exception as e:
         print("WALLET ERROR:", e)
 
