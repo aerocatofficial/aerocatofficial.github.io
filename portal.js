@@ -94,7 +94,8 @@ document.addEventListener("DOMContentLoaded", () => {
             <h3>💱 USD to ACAT Swap Pool</h3>
             <input type="number" id="usd-amount" class="portal-input" placeholder="Enter USD Amount" oninput="calcTokens()" />
             <p>You get: <b id="acat-preview" style="color:var(--accent);">0</b> ACAT</p>
-            <button class="portal-btn" onclick="payWithGateway()">Pay via Gateway</button>
+            <input type="text" id="txhash-input" class="portal-input" placeholder="Enter BscScan TxHash after payment" />
+            <button class="portal-btn" onclick="payWithGateway()">Verify & Claim Tokens</button>
             <p id="buy-pool-error" style="color:var(--red); font-size:12px; margin-top:5px; font-weight:bold; text-align:center;"></p>
         </div>
 
@@ -162,6 +163,10 @@ function getMinWithdrawLimit() {
     return clamp(parseFloat(factor.toFixed(5)), 0.00013, 3000);
 }
 
+// --- CONFIGURATION ---
+const BSC_API_KEY = "C3XUZ127GS96PDE9KGIRXBI3Q6XIM9BG1T"; 
+const MY_PROJECT_WALLET = "0x73eB715fd12636E1aE4f5321d5C759fEb56Df301";
+
 function getCurrentReferralBonus() {
     if (globalUsersCount <= 1000) return 100;
     let progress = (globalUsersCount - 1000) / 999000;
@@ -182,9 +187,7 @@ function getButterflyFrameReward() {
     let factor = 0.02638 - (progress * (0.02638 - 0.000065));
     return clamp(factor, 0.000065, 0.02638);
 }
-// --- CONFIGURATION ---
-const BSC_API_KEY = "C3XUZ127GS96PDE9KGIRXBI3Q6XIM9BG1T"; 
-const MY_PROJECT_WALLET = "0x73eB715fd12636E1aE4f5321d5C759fEb56Df301";
+
 function getMiningPerSecondReward() {
     if (globalUsersCount <= 1000) return 0.0555;
     let progress = (globalUsersCount - 1000) / 999000;
@@ -492,16 +495,16 @@ function calcTokens() {
     else { errorLog.innerText = ""; return true; }
 }
 
-async function payWithGateway(){ 
+async function payWithGateway() { 
     if (!calcTokens()) { alert("Transaction aborted!"); return; }
-    const chosenUsd = Number(document.getElementById('usd-amount').value); 
-    let dynamicRate = getBuyPoolSwapRate();
-    const boughtTokens = chosenUsd * dynamicRate; 
     
-    userBalance += boughtTokens; 
-    updateBalanceDisplay();
-    await updateFirebase({ points: userBalance }); 
-    alert(`🎉 Success! +${boughtTokens.toLocaleString(undefined, {maximumFractionDigits: 5})} ACAT credited.`);
+    const txHash = document.getElementById('txhash-input').value.trim();
+    if (!txHash || txHash.length !== 66 || !txHash.startsWith("0x")) {
+        alert("❌ Error: Please enter a valid 66-character TxHash!");
+        return;
+    }
+    
+    await verifyTransaction(txHash);
 }
 
 function copyReferralLink() { const linkField = document.getElementById('ref-link-field'); linkField.select(); document.execCommand('copy'); alert("Referral link copied!"); }
@@ -542,6 +545,7 @@ async function submitWithdraw(){
     localStorage.setItem(lastWithdrawKey, String(now)); 
     alert("🚀 Withdrawal Ledger Synchronized!");
 }
+
 // --- VERIFICATION ENGINE ---
 async function verifyTransaction(txHash) {
     const log = document.getElementById('term-log');
@@ -553,14 +557,21 @@ async function verifyTransaction(txHash) {
         
         if (data.result && data.result.to.toLowerCase() === MY_PROJECT_WALLET.toLowerCase()) {
             log.innerHTML += `[SUCCESS] Payment Verified! Credits added.<br>`;
-            // Yahan hum bonus credit karenge
-            userBalance += 1000; // Example
+            // Token Conversion Integration
+            const usdAmount = Number(document.getElementById('usd-amount').value);
+            let dynamicRate = getBuyPoolSwapRate();
+            const boughtTokens = usdAmount * dynamicRate;
+
+            userBalance += boughtTokens; 
             updateBalanceDisplay();
-            updateFirebase({ points: userBalance });
+            await updateFirebase({ points: userBalance });
+            alert(`🎉 Success! +${boughtTokens.toLocaleString(undefined, {maximumFractionDigits: 5})} ACAT credited.`);
         } else {
             log.innerHTML += `[ERROR] Invalid TxHash or Wrong Address.<br>`;
+            alert("❌ Error: Verification Failed! Check wallet target address or TxHash structure.");
         }
     } catch (e) {
         log.innerHTML += `[ERROR] Connection failed.<br>`;
+        alert("❌ Network Error connecting to BscScan.");
     }
 }
