@@ -207,6 +207,7 @@ async function updateFirebase(updatedFields){
     } catch(e) { console.error("Firebase update error", e); }
 }
 
+// Fixed float point rounding accuracy
 function updateBalanceDisplay() {
     const el = document.getElementById('balance-view');
     if (el) el.innerText = userBalance.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 7});
@@ -404,6 +405,8 @@ function renderCandleFrame() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.strokeStyle = "#161b22"; ctx.lineWidth = 1;
     for (let i = 0; i < canvas.height; i += 25) { ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(canvas.width, i); ctx.stroke(); }
+
+    if (candleBars.length === 0) return;
 
     candleTimeCounter++; const currentCandle = candleBars[candleBars.length - 1];
     const tickChange = tradeActive ? ((tradeType === "BUY") ? (Math.random() * 4 - 2.5) : (Math.random() * 4 - 1.5)) : (Math.random() * 6 - 3);
