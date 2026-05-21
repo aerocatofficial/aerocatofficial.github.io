@@ -146,9 +146,9 @@ const lanes = { left: "15%", center: "45%", right: "75%" };
 
 function clamp(n, a, b) { return Math.max(a, Math.min(b, n)); }
 
-// --- LINEAR MATH ENGINE ---
+// --- FIXED BENCHMARKS LOGIC ENGINE ---
 function getMinWithdrawLimit() {
-    if (globalUsersCount <= 1000) return 3000;
+    if (globalUsersCount <= 1000) return 3000; // Fixed Start point to exact 3,000 ACAT
     let progress = (globalUsersCount - 1000) / 999000;
     let factor = 3000 - (progress * (3000 - 0.00013));
     return clamp(parseFloat(factor.toFixed(5)), 0.00013, 3000);
@@ -169,10 +169,10 @@ function getCurrentWelcomeBonus() {
 }
 
 function getButterflyFrameReward() {
-    if (globalUsersCount <= 1000) return 5;
+    if (globalUsersCount <= 1000) return 15; 
     let progress = (globalUsersCount - 1000) / 999000;
-    let factor = 5 - (progress * (5 - 0.0000026));
-    return clamp(factor, 0.0000026, 5);
+    let factor = 15 - (progress * (15 - 0.0000026));
+    return clamp(factor, 0.0000026, 15);
 }
 
 function getMiningPerSecondReward() {
@@ -327,7 +327,7 @@ function updateGameFrame() {
 
 async function gameOver() {
     gameActive = false; clearInterval(gameLoopInterval); playBoomSound();
-    let calculatedReward = getButterflyFrameReward() * 3; 
+    let calculatedReward = getButterflyFrameReward() * 5; 
     sessionEarnings += calculatedReward; userBalance += calculatedReward;
     updateBalanceDisplay();
     await updateFirebase({ points: userBalance });
@@ -487,7 +487,7 @@ async function payWithGateway(){
 
 function copyReferralLink() { const linkField = document.getElementById('ref-link-field'); linkField.select(); document.execCommand('copy'); alert("Referral link copied!"); }
 
-// WITHDRAW PROCESS (SECURED AGAINST MALICIOUS INJECTIONS)
+// WITHDRAW PROCESS
 async function submitWithdraw(){
     const walletAddr = document.getElementById('wallet-input-field').value.trim();
     const amount = parseFloat(document.getElementById('withdraw-amount').value);
@@ -496,7 +496,6 @@ async function submitWithdraw(){
         alert("❌ Error: Invalid BEP20 Address"); return;
     }
 
-    // Exploit Vulnerability Fix (Anti-Negative Injection Guard)
     if (isNaN(amount) || amount <= 0) {
         alert("❌ Error: Invalid withdrawal amount requested."); return;
     }
