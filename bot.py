@@ -2,10 +2,24 @@ import telebot
 import requests
 import json
 import os
+from flask import Flask
+from threading import Thread
 
-# Ensure BOT_TOKEN is set in Replit Secrets or pasted here
-BOT_TOKEN = "8889229014:AAH5dA_lgvUoP6-7yJl4ZBeESmJ-5_GZv7k"
+# --- KEEP ALIVE SERVER ---
+app = Flask('')
+@app.route('/')
+def home():
+    return "Bot is alive!"
+def run():
+    app.run(host='0.0.0.0', port=8080)
+def keep_alive():
+    t = Thread(target=run)
+    t.start()
 
+keep_alive() # Ye aapke bot ko 24/7 zinda rakhega
+# -------------------------
+
+BOT_TOKEN = "8889229014:AAH5dA_lgvUoP6-7yJl4ZBeESmJ-5_Gzv7k"
 bot = telebot.TeleBot(BOT_TOKEN)
 FIREBASE_URL = "https://aero-cat-mining-default-rtdb.firebaseio.com/users"
 WEB_PORTAL_URL = "https://aerocatofficial.github.io/"
@@ -19,14 +33,9 @@ def start_command(message):
         response = requests.get(f"{FIREBASE_URL}/{user_id}.json")
         user_data = response.json()
 
-        # Keyboard Markup
         markup = telebot.types.InlineKeyboardMarkup()
         web_app_info = telebot.types.WebAppInfo(url=WEB_PORTAL_URL)
-        
-        # Game Button
         markup.add(telebot.types.InlineKeyboardButton(text="⛏️ Open Aero Cat Hub", web_app=web_app_info))
-        
-        # Social Buttons
         markup.add(
             telebot.types.InlineKeyboardButton(text="📢 WhatsApp Channel", url="https://whatsapp.com/channel/0029Vb88Z3ABKfhrcBWys11W"),
             telebot.types.InlineKeyboardButton(text="𝕏 Follow on X", url="https://x.com/AerocatTeam")
@@ -36,10 +45,8 @@ def start_command(message):
             new_data = {'username': username, 'points': 0, 'wallet': 'Not Connected'}
             requests.put(f"{FIREBASE_URL}/{user_id}.json", json=new_data)
             welcome_text = (f"✈️ <b>Welcome to Aero Cat Mining, @{username}!</b>\n\n"
-                            f"Aero Cat Mining Network is now live! Join our community, "
-                            f"play, and mine ACAT tokens directly.\n\n"
-                            f"Mining is simple—just click the button below to open the hub "
-                            f"and start earning.")
+                            f"Aero Cat Mining Network is now live! Join our community.\n\n"
+                            f"Mining is simple—just click the button below.")
         else:
             welcome_text = (f"👋 <b>Welcome Back, @{username}</b>\n\n"
                             f"Ready to mine more? Open your Mining Portal below.")
@@ -55,17 +62,15 @@ def set_wallet(message):
         if len(parts) < 2:
             bot.reply_to(message, "❌ Usage: <code>/setwallet 0xYourWalletAddress</code>", parse_mode="HTML")
             return
-        
         addr = parts[1].strip()
         if not addr.startswith("0x") or len(addr) != 42:
             bot.reply_to(message, "❌ Invalid wallet address format!")
             return
-
         requests.patch(f"{FIREBASE_URL}/{message.from_user.id}.json", json={'wallet': addr})
-        bot.reply_to(message, f"✅ <b>Wallet Linked Successfully:</b>\n<code>{addr}</code>", parse_mode="HTML")
+        bot.reply_to(message, f"✅ <b>Wallet Linked:</b>\n<code>{addr}</code>", parse_mode="HTML")
     except Exception as e:
         print("WALLET ERROR:", e)
 
 if __name__ == "__main__":
-    print("[ACTIVE] Aero Cat Bot Core is running flawlessly via Replit Polling...")
+    print("[ACTIVE] Aero Cat Bot Core is running flawlessly...")
     bot.infinity_polling()
