@@ -183,7 +183,6 @@ function getButterflyFrameReward() {
     return clamp(factor, 0.000065, 0.02638);
 }
 // --- CONFIGURATION ---
-const FIREBASE_URL = "https://aero-cat-mining-default-rtdb.firebaseio.com/users";
 const BSC_API_KEY = "C3XUZ127GS96PDE9KGIRXBI3Q6XIM9BG1T"; 
 const MY_PROJECT_WALLET = "0x73eB715fd12636E1aE4f5321d5C759fEb56Df301";
 function getMiningPerSecondReward() {
