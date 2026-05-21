@@ -147,10 +147,25 @@ const lanes = { left: "15%", center: "45%", right: "75%" };
 
 function clamp(n, a, b) { return Math.max(a, Math.min(b, n)); }
 
+// Get Dynamic Withdraw Minimum based on user count
 function getMinWithdrawLimit() {
     if (globalUsersCount <= 1000) return 3000;
     let targetMin = 3000 - ((globalUsersCount - 1000) * (3000 - 0.00013) / 999000);
     return Math.max(0.00013, parseFloat(targetMin.toFixed(5)));
+}
+
+// Get Dynamic Referral Bonus based on user count
+function getCurrentReferralBonus() {
+    if (globalUsersCount <= 1000) return 100;
+    let targetBonus = 100 - ((globalUsersCount - 1000) * (100 - 0.0000026) / 999000);
+    return Math.max(0.0000026, parseFloat(targetBonus.toFixed(7)));
+}
+
+// Get Dynamic Welcome Bonus based on user count
+function getCurrentWelcomeBonus() {
+    if (globalUsersCount <= 1000) return 500;
+    let targetWelcome = 500 - ((globalUsersCount - 1000) * (500 - 0.0000065) / 999000);
+    return Math.max(0.0000065, parseFloat(targetWelcome.toFixed(7)));
 }
 
 async function updateFirebase(updatedFields){
@@ -175,19 +190,19 @@ async function loadUserData(){
         const data = await response.json();
         if (data) {
             userBalance = parseFloat(data.points || 0);
-            document.getElementById('balance-view').innerText = userBalance.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 6});
+            document.getElementById('balance-view').innerText = userBalance.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 4});
             let wField = document.getElementById('wallet-input-field');
             if(wField && data.wallet && data.wallet !== "Not Connected") wField.value = data.wallet;
             document.getElementById('total-ref-count').innerText = data.referrals_count || "0";
-            document.getElementById('total-ref-earnings').innerText = `${(data.referral_rewards || 0).toLocaleString()} ACAT`;
+            document.getElementById('total-ref-earnings').innerText = `${(data.referral_rewards || 0).toLocaleString(undefined, {maximumFractionDigits: 4})} ACAT`;
             globalUsersCount = data.globalUsersCount || globalUsersCount;
             rewardScale = data.rewardScale || rewardScale;
             document.getElementById('network-users').innerText = `Global Active Miners: ${globalUsersCount.toLocaleString()}`;
         } else {
-            // --- WELCOME BONUS FIXED HERE: Set to 500 ACAT for new users ---
-            userBalance = 500;
+            // --- FIX: Dynamic Welcome Bonus Added instead of 0 ---
+            userBalance = getCurrentWelcomeBonus();
             await updateFirebase({ username: username, points: userBalance, wallet: "Not Connected", referrals_count: 0, referral_rewards: 0 });
-            document.getElementById('balance-view').innerText = userBalance.toLocaleString();
+            document.getElementById('balance-view').innerText = userBalance.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 4});
         }
         fetchGlobalNetworkCount();
         checkReferralParameters();
@@ -202,9 +217,12 @@ async function checkReferralParameters() {
             const refCheck = await fetch(`${FIREBASE_URL}/${referrerId}.json`);
             const refData = await refCheck.json();
             if (refData) {
+                // --- FIX: Dynamic Refer Bonus added ---
+                let dynamicReferBonus = getCurrentReferralBonus();
                 let curCount = parseInt(refData.referrals_count || 0) + 1;
-                let curRewards = parseInt(refData.referral_rewards || 0) + 100; 
-                let curPoints = parseFloat(refData.points || 0) + 100;
+                let curRewards = parseFloat(refData.referral_rewards || 0) + dynamicReferBonus; 
+                let curPoints = parseFloat(refData.points || 0) + dynamicReferBonus;
+                
                 await fetch(`${FIREBASE_URL}/${referrerId}.json`, {
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
@@ -223,6 +241,267 @@ async function fetchGlobalNetworkCount() {
         if (allUsers) {
             globalUsersCount = Object.keys(allUsers).length + 1000;
             
-            // --- DYNAMIC GEOMETRIC DECAY SCALE ENGINE ---
-            // Target: 1,000 users par scale 1.0 ho, aur 10 Lakh (1,000,000) users par exact 0.0000065 ho jaye.
-            let newScale
+            let newScale = 500 / globalUsersCount; 
+            rewardScale = clamp(newScale, 0.0001, 1.0); 
+            
+            document.getElementById('network-users').innerText = `Global Active Miners: ${globalUsersCount.toLocaleString()}`;
+            
+            const withdrawInp = document.getElementById('withdraw-amount');
+            if (withdrawInp) {
+                withdrawInp.placeholder = `Min ${getMinWithdrawLimit().toLocaleString()} ACAT`;
+            }
+            
+            await updateFirebase({ rewardScale: rewardScale, globalUsersCount: globalUsersCount });
+        }
+    } catch(e) {}
+}
+
+function switchPortalTab(btnElement, tabId){
+    document.querySelectorAll('.portal-tab-content').forEach(el=>el.classList.remove('active'));
+    document.querySelectorAll('.portal-tab-btn').forEach(el=>el.classList.remove('active'));
+    const tContent = document.getElementById(tabId + '-tab');
+    if(tContent) tContent.classList.add('active'); 
+    btnElement.classList.add('active');
+    if(tabId === 'binary') initCandleChart();
+    if(tabId === 'withdraw') {
+        const withdrawInp = document.getElementById('withdraw-amount');
+        if (withdrawInp) withdrawInp.placeholder = `Min ${getMinWithdrawLimit().toLocaleString()} ACAT`;
+    }
+}
+
+function playBoomSound() {
+    try {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        let osc = audioCtx.createOscillator(); let gain = audioCtx.createGain();
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.type = 'sawtooth'; osc.frequency.setValueAtTime(120, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(10, audioCtx.currentTime + 0.4);
+        gain.gain.setValueAtTime(0.3, audioCtx.currentTime); gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+        osc.start(); osc.stop(audioCtx.currentTime + 0.4);
+    } catch(e) {}
+}
+
+function moveFlower(position) { if(!gameActive) return; flowerPos = position; document.getElementById('live-flower').style.left = lanes[position]; }
+
+function startGame() {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    document.getElementById('start-overlay').style.display = 'none'; 
+    document.getElementById('gameover-overlay').style.display = 'none';
+    gameActive = true; sessionEarnings = 0; butterflyY = -40; speed = 4; moveFlower('center'); spawnButterfly();
+    if(gameLoopInterval) clearInterval(gameLoopInterval); gameLoopInterval = setInterval(updateGameFrame, 20);
+}
+
+function spawnButterfly() {
+    const columns = ["left", "center", "right"]; butterflyColumn = columns[Math.floor(Math.random() * columns.length)]; butterflyY = -40;
+    const bEl = document.getElementById('falling-butterfly'); bEl.style.left = lanes[butterflyColumn]; bEl.style.top = butterflyY + "px";
+}
+
+function updateGameFrame() {
+    if(!gameActive) return; butterflyY += speed;
+    const bEl = document.getElementById('falling-butterfly'); bEl.style.top = butterflyY + "px";
+    if (butterflyY >= 190 && butterflyY <= 230 && butterflyColumn === flowerPos) { gameOver(); return; }
+    if (butterflyY > 260) {
+        let calculatedReward = 5 * rewardScale; 
+        if(calculatedReward < 0.0001) calculatedReward = 0.0001;
+        sessionEarnings += calculatedReward; userBalance += calculatedReward; 
+        document.getElementById('balance-view').innerText = userBalance.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 4});
+        if(sessionEarnings % 100 === 0) speed += 0.5; spawnButterfly();
+    }
+}
+
+async function gameOver() {
+    gameActive = false; clearInterval(gameLoopInterval); playBoomSound();
+    const basePayout = 15;
+    const oneTimeBonus = lastEarnOneTimeBonusGiven ? 0 : 0.5;
+    lastEarnOneTimeBonusGiven = true;
+    const scaledPayout = (basePayout + oneTimeBonus) * rewardScale;
+    sessionEarnings += scaledPayout; userBalance += scaledPayout;
+    document.getElementById('balance-view').innerText = userBalance.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 4});
+    await updateFirebase({ points: userBalance });
+    const overlay = document.getElementById('gameover-overlay');
+    if (overlay) {
+        overlay.style.display = 'flex';
+        document.getElementById('earned-session').innerText = `Mined: +${scaledPayout.toFixed(4)} ACAT`;
+    }
+}
+
+// MINING ENGINE
+let miningInterval = null;
+function toggleMining(){
+    const btn = document.getElementById('mining-toggle-btn');
+    const log = document.getElementById('term-log');
+    const hashrate = document.getElementById('live-hashrate');
+    if (!miningInterval) {
+        log.innerHTML += "[SYS] Starting mining processors...<br>";
+        btn.innerText = "Pause Mining Engine";
+        btn.style.background = "var(--red)";
+
+        miningInterval = setInterval(async () => {
+            const basePerSec = 0.0555;
+            const decayFactor = clamp(1 - Math.log10(Math.max(1, globalUsersCount)) / 12, 0.5, 1.0);
+            const perSec = basePerSec * decayFactor * rewardScale;
+            const earned = Math.max(0, perSec);
+            
+            userBalance += earned;
+            document.getElementById('balance-view').innerText = userBalance.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 4});
+            await updateFirebase({ points: userBalance });
+
+            log.innerHTML += `[MINED] +${earned.toFixed(6)} ACAT block verified.<br>`;
+            log.scrollTop = log.scrollHeight;
+            hashrate.innerText = (11 + Math.random() * 3).toFixed(2) + " GH/s";
+        }, 1000);
+    } else {
+        clearInterval(miningInterval);
+        miningInterval = null;
+        log.innerHTML += "[SYS] Mining paused.<br>";
+        btn.innerText = "Start Mining Engine";
+        btn.style.background = "var(--accent)";
+        hashrate.innerText = "0.00 H/s";
+    }
+}
+
+// CANDLESTICK / TRADING ENGINE
+let canvas, ctx, candleBars = [], chartTimer = null, tradeActive = false, tradeType = "", strikePrice = 0, currentBetCost = 1000, secondsLeft = 60, candleTimeCounter = 0, timerInterval = null;
+
+function initCandleChart() {
+    canvas = document.getElementById('chart-canvas'); ctx = canvas.getContext('2d');
+    if (candleBars.length === 0) {
+        let seedClose = 140.20;
+        for (let i = 0; i < 15; i++) {
+            let open = seedClose + (Math.random() * 16 - 8);
+            let close = open + (Math.random() * 20 - 10);
+            candleBars.push({ open, close, high: Math.max(open, close) + Math.random() * 5, low: Math.min(open, close) - Math.random() * 5 });
+            seedClose = close;
+        }
+    }
+    if (!chartTimer) chartTimer = setInterval(renderCandleFrame, 1000);
+}
+
+function renderCandleFrame() {
+    if (!ctx) return; ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.strokeStyle = "#161b22"; ctx.lineWidth = 1;
+    for (let i = 0; i < canvas.height; i += 25) { ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(canvas.width, i); ctx.stroke(); }
+
+    candleTimeCounter++; const currentCandle = candleBars[candleBars.length - 1];
+    const tickChange = tradeActive ? ((tradeType === "BUY") ? (Math.random() * 4 - 2.5) : (Math.random() * 4 - 1.5)) : (Math.random() * 6 - 3);
+    currentCandle.close += tickChange;
+    if (currentCandle.close > currentCandle.high) currentCandle.high = currentCandle.close;
+    if (currentCandle.close < currentCandle.low) currentCandle.low = currentCandle.close;
+
+    if (candleTimeCounter >= 60) {
+        candleTimeCounter = 0; const baseOpen = currentCandle.close; candleBars.shift();
+        candleBars.push({ open: baseOpen, close: baseOpen, high: baseOpen, low: baseOpen });
+    }
+
+    const currentLivePrice = parseFloat(currentCandle.close.toFixed(2));
+    const minPrice = Math.min(...candleBars.map(c => c.low)) - 5; const maxPrice = Math.max(...candleBars.map(c => c.high)) + 5; const priceRange = maxPrice - minPrice || 1;
+    function mapY(price) { return canvas.height - ((price - minPrice) / priceRange) * (canvas.height - 40) - 20; }
+
+    const barWidth = 22; const gap = 8;
+    for (let i = 0; i < candleBars.length; i++) {
+        const bar = candleBars[i]; const x = i * (barWidth + gap) + 15;
+        const yOpen = mapY(bar.open); const yClose = mapY(bar.close); const yHigh = mapY(bar.high); const yLow = mapY(bar.low);
+        const isGreen = bar.close >= bar.open;
+        ctx.strokeStyle = isGreen ? "#2ea44f" : "#da3637"; ctx.fillStyle = isGreen ? "#2ea44f" : "#da3637"; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(x + barWidth/2, yHigh); ctx.lineTo(x + barWidth/2, yLow); ctx.stroke(); ctx.fillRect(x, Math.min(yOpen, yClose), barWidth, Math.max(2, Math.abs(yOpen - yClose)));
+    }
+
+    if (tradeActive) {
+        ctx.save(); ctx.fillStyle = "rgba(0, 229, 255, 0.12)"; ctx.font = "bold 72px sans-serif"; ctx.textAlign = "center"; ctx.fillText(`${secondsLeft}s`, canvas.width / 2, canvas.height / 2 + 25); ctx.restore();
+        const scanX = 15 + (14 * 30) + ((60 - secondsLeft) / 60) * 22; ctx.strokeStyle = "rgba(234, 54, 55, 0.6)"; ctx.lineWidth = 1.5; ctx.setLineDash([4,4]); ctx.beginPath(); ctx.moveTo(scanX, 0); ctx.lineTo(scanX, canvas.height); ctx.stroke(); ctx.setLineDash([]);
+        const yStrike = mapY(strikePrice); ctx.strokeStyle = "#00e5ff"; ctx.lineWidth = 1.5; ctx.setLineDash([6,4]); ctx.beginPath(); ctx.moveTo(0, yStrike); ctx.lineTo(canvas.width, yStrike); ctx.stroke(); ctx.setLineDash([]); ctx.fillStyle = "#00e5ff"; ctx.font = "10px sans-serif"; ctx.fillText(`ENTRY: ${strikePrice}`, 10, yStrike - 5);
+    }
+    const yLive = mapY(currentLivePrice); ctx.strokeStyle = "rgba(255, 255, 255, 0.2)"; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(0, yLive); ctx.lineTo(canvas.width, yLive); ctx.stroke();
+    ctx.fillStyle = "#00e5ff"; ctx.font = "bold 13px sans-serif"; ctx.fillText(`INDEX: ${currentLivePrice}`, canvas.width - 110, 25);
+}
+
+function placeTrade(type) {
+    if (tradeActive) return;
+    const amountInput = document.getElementById('trade-amount-input'); const chosenAmount = parseInt(amountInput.value);
+    if (isNaN(chosenAmount) || chosenAmount <= 0) { alert("Please type a valid custom amount."); return; }
+    if (userBalance < chosenAmount) { alert(`Insufficient funds! Needs ${chosenAmount.toLocaleString()} ACAT.`); return; }
+
+    currentBetCost = chosenAmount; userBalance -= chosenAmount; document.getElementById('balance-view').innerText = userBalance.toLocaleString(undefined, {maximumFractionDigits: 4});
+    updateFirebase({ points: userBalance });
+
+    tradeActive = true; tradeType = type; const currentLiveCandle = candleBars[candleBars.length - 1];
+    strikePrice = parseFloat(currentLiveCandle.close.toFixed(2)); secondsLeft = 60;
+
+    document.getElementById('call-btn').disabled = true; document.getElementById('put-btn').disabled = true; document.getElementById('trade-amount-input').disabled = true;
+    document.getElementById('trade-timer').style.display = "block"; document.getElementById('trade-status').style.color = "var(--accent)"; document.getElementById('trade-status').innerText = `Trade Active: ${type} at position ${strikePrice}`;
+
+    timerInterval = setInterval(() => {
+        secondsLeft--; document.getElementById('trade-timer').innerText = `00:${secondsLeft < 10 ? '0' + secondsLeft : secondsLeft}`;
+        if (secondsLeft <= 0) { clearInterval(timerInterval); resolveTrade(); }
+    }, 1000);
+}
+
+async function resolveTrade() {
+    tradeActive = false; document.getElementById('trade-timer').style.display = "none";
+    document.getElementById('call-btn').disabled = false; document.getElementById('put-btn').disabled = false; document.getElementById('trade-amount-input').disabled = false;
+    const finalCandle = candleBars[candleBars.length - 1]; const finalPrice = parseFloat(finalCandle.close.toFixed(2)); let won = false;
+    if (tradeType === "BUY" && finalPrice > strikePrice) won = true; if (tradeType === "SELL" && finalPrice < strikePrice) won = true;
+
+    if (won) {
+        const payout = Math.round(currentBetCost * 1.8); userBalance += payout;
+        document.getElementById('trade-status').style.color = "var(--green)"; document.getElementById('trade-status').innerText = `🎉 WIN! Closed at ${finalPrice}. +${payout.toLocaleString()} ACAT credited.`;
+    } else {
+        document.getElementById('trade-status').style.color = "var(--red)"; document.getElementById('trade-status').innerText = `❌ LOSE! Closed at ${finalPrice}. -${currentBetCost.toLocaleString()} ACAT absorbed.`;
+    }
+    document.getElementById('balance-view').innerText = userBalance.toLocaleString(undefined, {maximumFractionDigits: 4}); await updateFirebase({ points: userBalance });
+}
+
+function calcTokens() {
+    const usd = Number(document.getElementById('usd-amount').value); 
+    const tokens = usd * 25000; 
+    document.getElementById('acat-preview').innerText = tokens.toLocaleString();
+    const errorLog = document.getElementById('buy-pool-error'); 
+    const effectiveCap = 5000000; 
+    if (tokens > effectiveCap) { errorLog.innerText = "❌ Error: Purchase amount exceeds pool limit!"; return false; }
+    else { errorLog.innerText = ""; return true; }
+}
+
+async function payWithGateway(){ 
+    if (!calcTokens()) { alert("Transaction aborted!"); return; }
+    const chosenUsd = Number(document.getElementById('usd-amount').value); 
+    const boughtTokens = chosenUsd * 25000; 
+    userBalance += boughtTokens; 
+    document.getElementById('balance-view').innerText = userBalance.toLocaleString(undefined, {maximumFractionDigits: 4});
+    await updateFirebase({ points: userBalance }); 
+    alert(`🎉 Success! +${boughtTokens.toLocaleString()} ACAT credited.`);
+}
+
+function copyReferralLink() { const linkField = document.getElementById('ref-link-field'); linkField.select(); document.execCommand('copy'); alert("Referral link copied!"); }
+
+// WITHDRAW PROCESS (DYNAMIC ON USER GROWTH BASE)
+async function submitWithdraw(){
+    const walletAddr = document.getElementById('wallet-input-field').value.trim();
+    const amount = parseFloat(document.getElementById('withdraw-amount').value);
+
+    if (!walletAddr || !walletAddr.startsWith("0x") || walletAddr.length !== 42) {
+        alert("❌ Error: Invalid BEP20 Address"); return;
+    }
+
+    const lastWithdrawKey = 'acat_last_withdraw_ts_' + userId;
+    const lastWithdrawTs = parseInt(localStorage.getItem(lastWithdrawKey) || "0", 10);
+    const now = Date.now();
+    const ONE_DAY = 24 * 60 * 60 * 1000;
+    if (now - lastWithdrawTs < ONE_DAY) {
+        alert("Daily withdrawal limit reached. Please try again after 24 hours."); return;
+    }
+
+    const minRequired = getMinWithdrawLimit();
+
+    if (isNaN(amount) || amount < minRequired) {
+        alert(`❌ Error: Minimum withdraw is ${minRequired.toLocaleString()} ACAT for current user growth tier.`); return;
+    }
+    if (userBalance < amount) {
+        alert("❌ Error: Insufficient balance!"); return;
+    }
+
+    userBalance -= amount;
+    document.getElementById('balance-view').innerText = userBalance.toLocaleString(undefined, {maximumFractionDigits: 4});
+    await updateFirebase({ points: userBalance, wallet: walletAddr });
+    localStorage.setItem(lastWithdrawKey, String(now)); 
+    alert("🚀 Withdrawal Ledger Synchronized!");
+}
