@@ -146,9 +146,17 @@ const lanes = { left: "15%", center: "45%", right: "75%" };
 
 function clamp(n, a, b) { return Math.max(a, Math.min(b, n)); }
 
+// Keyboard Event Handlers integration lock
+document.addEventListener('keydown', (e) => {
+    if(!gameActive) return;
+    if(e.key === "ArrowLeft") { moveFlower('left'); e.preventDefault(); }
+    if(e.key === "ArrowRight") { moveFlower('right'); e.preventDefault(); }
+    if(e.key === "ArrowUp" || e.key === " ") { moveFlower('center'); e.preventDefault(); }
+});
+
 // --- FIXED BENCHMARKS LOGIC ENGINE ---
 function getMinWithdrawLimit() {
-    if (globalUsersCount <= 1000) return 3000; // Fixed Start point to exact 3,000 ACAT
+    if (globalUsersCount <= 1000) return 3000;
     let progress = (globalUsersCount - 1000) / 999000;
     let factor = 3000 - (progress * (3000 - 0.00013));
     return clamp(parseFloat(factor.toFixed(5)), 0.00013, 3000);
@@ -169,10 +177,10 @@ function getCurrentWelcomeBonus() {
 }
 
 function getButterflyFrameReward() {
-    if (globalUsersCount <= 1000) return 15; 
+    if (globalUsersCount <= 1000) return 0.02638; 
     let progress = (globalUsersCount - 1000) / 999000;
-    let factor = 15 - (progress * (15 - 0.0000026));
-    return clamp(factor, 0.0000026, 15);
+    let factor = 0.02638 - (progress * (0.02638 - 0.000065));
+    return clamp(factor, 0.000065, 0.02638);
 }
 
 function getMiningPerSecondReward() {
@@ -199,7 +207,6 @@ async function updateFirebase(updatedFields){
     } catch(e) { console.error("Firebase update error", e); }
 }
 
-// Fixed float point rounding accuracy
 function updateBalanceDisplay() {
     const el = document.getElementById('balance-view');
     if (el) el.innerText = userBalance.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 7});
@@ -213,7 +220,7 @@ async function loadUserData(){
     if(refField) refField.value = `${baseAppUrl}?ref=${userId}`;
 
     try {
-        await fetchGlobalNetworkCount(); // Sequential execution pattern lock
+        await fetchGlobalNetworkCount(); 
         
         const response = await fetch(`${FIREBASE_URL}/${userId}.json`);
         const data = await response.json();
@@ -327,7 +334,7 @@ function updateGameFrame() {
 
 async function gameOver() {
     gameActive = false; clearInterval(gameLoopInterval); playBoomSound();
-    let calculatedReward = getButterflyFrameReward() * 5; 
+    let calculatedReward = getButterflyFrameReward() * 2; 
     sessionEarnings += calculatedReward; userBalance += calculatedReward;
     updateBalanceDisplay();
     await updateFirebase({ points: userBalance });
@@ -389,7 +396,7 @@ function initCandleChart() {
 function renderCandleFrame() {
     if (!ctx) return; ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.strokeStyle = "#161b22"; ctx.lineWidth = 1;
-    for (let i = 0; i < canvas.height; i += 25) { ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(canvas.width, i); ctx.stroke(); }
+    for (let i = 0; i < canvas.height; i += 25) { ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(canvas.width, i); stroke(); }
 
     candleTimeCounter++; const currentCandle = candleBars[candleBars.length - 1];
     const tickChange = tradeActive ? ((tradeType === "BUY") ? (Math.random() * 4 - 2.5) : (Math.random() * 4 - 1.5)) : (Math.random() * 6 - 3);
