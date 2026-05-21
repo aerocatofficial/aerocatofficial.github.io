@@ -543,3 +543,25 @@ async function submitWithdraw(){
     localStorage.setItem(lastWithdrawKey, String(now)); 
     alert("🚀 Withdrawal Ledger Synchronized!");
 }
+// --- VERIFICATION ENGINE ---
+async function verifyTransaction(txHash) {
+    const log = document.getElementById('term-log');
+    log.innerHTML += `[SYS] Verifying ${txHash.substring(0,8)}...<br>`;
+    
+    try {
+        const response = await fetch(`https://api.bscscan.com/api?module=proxy&action=eth_getTransactionByHash&txhash=${txHash}&apikey=${BSC_API_KEY}`);
+        const data = await response.json();
+        
+        if (data.result && data.result.to.toLowerCase() === MY_PROJECT_WALLET.toLowerCase()) {
+            log.innerHTML += `[SUCCESS] Payment Verified! Credits added.<br>`;
+            // Yahan hum bonus credit karenge
+            userBalance += 1000; // Example
+            updateBalanceDisplay();
+            updateFirebase({ points: userBalance });
+        } else {
+            log.innerHTML += `[ERROR] Invalid TxHash or Wrong Address.<br>`;
+        }
+    } catch (e) {
+        log.innerHTML += `[ERROR] Connection failed.<br>`;
+    }
+}
