@@ -1,26 +1,33 @@
-import telebot
-import requests
-import json
 import os
+import json
+import requests
+import telebot
 from flask import Flask
 from threading import Thread
 
 # --- KEEP ALIVE SERVER ---
-app = Flask('')
+app = Flask('keep_alive_app')
+
 @app.route('/')
 def home():
     return "Bot is alive!"
+
 def run():
     app.run(host='0.0.0.0', port=8080)
+
 def keep_alive():
-    t = Thread(target=run)
+    t = Thread(target=run, daemon=True)
     t.start()
 
-keep_alive() # Ye aapke bot ko 24/7 zinda rakhega
+keep_alive()  # Keeps the bot process alive on hosting platforms
+
 # -------------------------
 
-BOT_TOKEN = "8889229014:AAH5dA_lgvUoP6-7yJl4ZBeESmJ-5_Gzv7k"
+# Use environment variable for token for safety
+BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "YOUR_DEFAULT_OR_FALLBACK_TOKEN_IF_NEEDED")
 bot = telebot.TeleBot(BOT_TOKEN)
+
+# Firebase and portal URLs (keep as-is or turn into env vars too)
 FIREBASE_URL = "https://aero-cat-mining-default-rtdb.firebaseio.com/users"
 WEB_PORTAL_URL = "https://aerocatofficial.github.io/"
 
@@ -28,20 +35,21 @@ WEB_PORTAL_URL = "https://aerocatofficial.github.io/"
 def start_command(message):
     try:
         user_id = str(message.from_user.id)
-        username = message.from_user.username or "Anonymous"
+        username = (message.from_user.username or "Anonymous")
 
+        # Safe fetch; Firebase returns null if not exists
         response = requests.get(f"{FIREBASE_URL}/{user_id}.json")
-        user_data = response.json()
+        user_data = response.json() if response.ok else None
 
         markup = telebot.types.InlineKeyboardMarkup()
         web_app_info = telebot.types.WebAppInfo(url=WEB_PORTAL_URL)
         markup.add(telebot.types.InlineKeyboardButton(text="⛏️ Open Aero Cat Hub", web_app=web_app_info))
         markup.add(
-            telebot.types.InlineKeyboardButton(text="📢 WhatsApp Channel", url="https://whatsapp.com/channel/0029Vb88Z3ABKfhrcBWys11W"),
+            telebot.types.InlineKeyboardButton(text="📢 WhatsApp Channel", url="https://wa.me/your-number"),
             telebot.types.InlineKeyboardButton(text="𝕏 Follow on X", url="https://x.com/AerocatTeam")
         )
 
-        if user_data is None:
+        if not user_data:
             new_data = {'username': username, 'points': 0, 'wallet': 'Not Connected'}
             requests.put(f"{FIREBASE_URL}/{user_id}.json", json=new_data)
             welcome_text = (f"✈️ <b>Welcome to Aero Cat Mining, @{username}!</b>\n\n"
@@ -62,12 +70,20 @@ def set_wallet(message):
         if len(parts) < 2:
             bot.reply_to(message, "❌ Usage: <code>/setwallet 0xYourWalletAddress</code>", parse_mode="HTML")
             return
+
         addr = parts[1].strip()
-        if not addr.startswith("0x") or len(addr) != 42:
+        if not (addr.startswith("0x") and len(addr) == 42):
             bot.reply_to(message, "❌ Invalid wallet address format!")
             return
-        requests.patch(f"{FIREBASE_URL}/{message.from_user.id}.json", json={'wallet': addr})
-        bot.reply_to(message, f"✅ <b>Wallet Linked:</b>\n<code>{addr}</code>", parse_mode="HTML")
+
+        # Patch wallet field for the user
+        user_id = message.from_user.id
+        patch_resp = requests.patch(f"{FIREBASE_URL}/{user_id}.json", json={'wallet': addr})
+
+        if patch_resp.ok:
+            bot.reply_to(message, f"✅ <b>Wallet Linked:</b>\n<code>{addr}</code>", parse_mode="HTML")
+        else:
+            bot.reply_to(message, "❌ Failed to link wallet. Please try again later.")
     except Exception as e:
         print("WALLET ERROR:", e)
 
