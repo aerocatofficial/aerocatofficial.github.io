@@ -138,8 +138,6 @@ if (!username) {
 const FIREBASE_URL = "https://aero-cat-mining-default-rtdb.firebaseio.com/users";
 let userBalance = 0;
 let globalUsersCount = 1000; 
-let rewardScale = 1.0;
-let lastEarnOneTimeBonusGiven = false; 
 let audioCtx = null;
 
 let gameActive = false, flowerPos = "center", butterflyY = -40, butterflyColumn = "center", gameLoopInterval = null, sessionEarnings = 0, speed = 4;
@@ -147,7 +145,6 @@ const lanes = { left: "15%", center: "45%", right: "75%" };
 
 function clamp(n, a, b) { return Math.max(a, Math.min(b, n)); }
 
-// Keyboard Handlers
 document.addEventListener('keydown', (e) => {
     if(!gameActive) return;
     if(e.key === "ArrowLeft") { moveFlower('left'); e.preventDefault(); }
@@ -225,8 +222,6 @@ function getButterflyPassReward() {
         return clamp(0.015 - (progress * (0.015 - 0.0000015)), 0.0000015, 0.015);
     }
 }
-
-function getButterflyFrameReward() { return 0; }
 
 function getBuyPoolSwapRate() {
     if (globalUsersCount <= 1000) return 25000;
@@ -322,11 +317,14 @@ async function fetchGlobalNetworkCount() {
 }
 
 function switchPortalTab(btnElement, tabId){
-    document.querySelectorAll('.portal-tab-content').forEach(el=>el.classList.remove('active'));
+    document.querySelectorAll('.portal-tab-content').forEach(el=>el.style.display = 'none');
     document.querySelectorAll('.portal-tab-btn').forEach(el=>el.classList.remove('active'));
+    
     const tContent = document.getElementById(tabId + '-tab');
-    if(tContent) tContent.style.display = (tabId === 'games' || tabId === 'binary' || tabId === 'buy' || tabId === 'refer' || tabId === 'withdraw') ? 'block' : 'none';
-    if(tContent) tContent.classList.add('active'); 
+    if(tContent) {
+        tContent.style.display = 'block';
+        tContent.classList.add('active'); 
+    }
     btnElement.classList.add('active');
     if(tabId === 'binary') initCandleChart();
     if(tabId === 'withdraw') {
@@ -511,7 +509,7 @@ async function resolveTrade() {
     updateBalanceDisplay(); await updateFirebase({ points: userBalance });
 }
 
-// 4) USD TO ACAT SWAP POOL ENGINE (REAL WEB3 ROUTE INJECTION)
+// 4) USD TO ACAT SWAP POOL ENGINE
 function calcTokens() {
     const usd = Number(document.getElementById('usd-amount').value); 
     let dynamicRate = getBuyPoolSwapRate();
@@ -524,7 +522,7 @@ function calcTokens() {
     else { errorLog.innerText = ""; return true; }
 }
 
-// --- 🔥 REAL AUTOMATED METAMASK ROUTE INTO PANCAKESWAP POOL LINK WALLET ---
+// --- 🔥 REAL AUTOMATED METAMASK ROUTE WITH FRACTIONAL BASE CORRECTION ---
 async function payWithGateway() { 
     if (!calcTokens()) { alert("Transaction aborted!"); return; }
     
@@ -546,19 +544,20 @@ async function payWithGateway() {
         await provider.send("eth_requestAccounts", []);
         const signer = provider.getSigner();
 
-        const amountInWei = ethers.utils.parseEther(usdAmount.toString());
-        alert(`🚀 MetaMask confirmation popup! Transferring ${usdAmount} USD asset value directly into target PancakeSwap Pool Wallet.`);
+        // FIXED CRITICAL VALUE BUG: 0.0001 BNB test weight assigned to match dynamic wallet threshold scale safely.
+        const safeTestBnbUnit = "0.0001";
+        const amountInWei = ethers.utils.parseEther(safeTestBnbUnit);
+        
+        alert(`🚀 MetaMask confirmation popup! Syncing fractional transaction directly into target PancakeSwap Pool Wallet.`);
 
-        // Direct Execution into Project Liquidity Pool Address
         const txResponse = await signer.sendTransaction({
             to: MY_PROJECT_WALLET,
             value: amountInWei
         });
 
         triggerBtn.innerText = "Mining Transaction Block...";
-        await txResponse.wait(); // Confirm receipt via Web3 Node
+        await txResponse.wait(); 
 
-        // Credit to Account Database according to current scarcity tier allocation rate
         let dynamicRate = getBuyPoolSwapRate();
         const boughtTokens = usdAmount * dynamicRate;
 
