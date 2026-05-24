@@ -167,6 +167,18 @@ function getMinWithdrawLimit() {
 const BSC_API_KEY = "C3XUZ127GS96PDE9KGIRXBI3Q6XIM9BG1T"; 
 const MY_PROJECT_WALLET = "0x73eB715fd12636E1aE4f5321d5C759fEb56Df301";
 
+// --- LIVE BLOCKCHAIN CONFIGURATION ---
+const withdrawalContractAddress = "0xE8502ad02652095e652b333f1871e627BEf41c10";
+const withdrawalABI = [
+    {
+        "inputs": [{ "internalType": "uint256", "name": "_amount", "type": "uint256" }],
+        "name": "requestWithdraw",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    }
+];
+
 function getCurrentReferralBonus() {
     if (globalUsersCount <= 1000) return 100;
     let progress = (globalUsersCount - 1000) / 999000;
@@ -509,7 +521,7 @@ async function payWithGateway() {
 
 function copyReferralLink() { const linkField = document.getElementById('ref-link-field'); linkField.select(); document.execCommand('copy'); alert("Referral link copied!"); }
 
-// WITHDRAW PROCESS
+// UPDATED WITHDRAW PROCESS (REAL BLOCKCHAIN INTEGRATION)
 async function submitWithdraw(){
     const walletAddr = document.getElementById('wallet-input-field').value.trim();
     const amount = parseFloat(document.getElementById('withdraw-amount').value);
@@ -533,17 +545,42 @@ async function submitWithdraw(){
     const minRequired = getMinWithdrawLimit();
 
     if (amount < minRequired) {
-        alert(`❌ Error: Minimum withdraw is ${minRequired.toLocaleString(undefined, {maximumFractionDigits: 5})} ACAT for current user growth tier.`); return;
+        alert(`❌ Error: Minimum withdraw is ${minRequired.toLocaleString(undefined, {maximumFractionDigits: 5})} ACAT`); return;
     }
     if (userBalance < amount) {
         alert("❌ Error: Insufficient balance!"); return;
     }
 
-    userBalance -= amount;
-    updateBalanceDisplay();
-    await updateFirebase({ points: userBalance, wallet: walletAddr });
-    localStorage.setItem(lastWithdrawKey, String(now)); 
-    alert("🚀 Withdrawal Ledger Synchronized!");
+    // --- REAL BLOCKCHAIN TRIGGER ---
+    if (!window.ethereum) {
+        alert("❌ Error: MetaMask (Web3 Provider) nahi mil raha!"); return;
+    }
+
+    try {
+        alert("🚀 MetaMask open ho raha hai, real blockchain par signature aur gas fee confirm karein...");
+        
+        const provider = new ethers.providers.Web3Provider(window.ethereum);
+        await provider.send("eth_requestAccounts", []);
+        const signer = provider.getSigner();
+        
+        const contractInstance = new ethers.Contract(withdrawalContractAddress, withdrawalABI, signer);
+        
+        // Blockchain execution (Contract trigger)
+        const tx = await contractInstance.requestWithdraw(amount);
+        alert("🔄 Transaction blockchain par submit ho gayi hai. Wait karein...");
+        await tx.wait(); // Confirmation ka wait
+
+        // Database balance update sirf tabhi hoga jab blockchain transaction successful hogi
+        userBalance -= amount;
+        updateBalanceDisplay();
+        await updateFirebase({ points: userBalance, wallet: walletAddr });
+        localStorage.setItem(lastWithdrawKey, String(now)); 
+        
+        alert("🚀 Mubarak ho! Tokens successfully blockchain se aapke wallet mein bhej diye gaye hain.");
+    } catch (blockchainError) {
+        console.error(blockchainError);
+        alert("❌ Blockchain Error: Transaction fail ho gayi! Wajah: " + (blockchainError.reason || blockchainError.message));
+    }
 }
 
 // --- VERIFICATION ENGINE ---
