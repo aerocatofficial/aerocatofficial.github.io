@@ -27,7 +27,11 @@ document.addEventListener("DOMContentLoaded", () => {
     .portal-btn{ width:100%; padding:12px; border:none; border-radius:6px; cursor:pointer; font-size:16px; font-weight:bold; margin-top:10px; color:#fff; background:var(--green); font-family: 'Orbitron', sans-serif; box-shadow: 0 0 15px rgba(46, 164, 79, 0.2); }
     .portal-btn:disabled { background: #484f58 !important; cursor: not-allowed; opacity: 0.6; box-shadow: none; }
     .portal-input{ width:100%; padding:12px; background:var(--gray); border:1px solid #30363d; border-radius:6px; color:#fff; margin-bottom:10px; }
-    #game-canvas, #chart-canvas { width:100%; height:220px; background:#000; border-radius:10px; position:relative; overflow:hidden; margin-top:10px; border: 2px solid #30363d; }
+    
+    /* OPTIMIZED GEOMETRY FOR GAME WINDOW & TRADING VIEW */
+    #game-canvas { width:100%; height:320px; background:#000; border-radius:10px; position:relative; overflow:hidden; margin-top:10px; border: 2px solid #30363d; }
+    #chart-canvas { width:100%; height:220px; background:#000; border-radius:10px; position:relative; overflow:hidden; margin-top:10px; border: 2px solid #30363d; }
+    
     .butterfly { position:absolute; font-size:32px; top: -40px; left: 45%; width: 40px; text-align: center; }
     .flower { position:absolute; bottom:15px; left:45%; font-size:45px; transition: left 0.1s ease-out; width: 50px; text-align: center; }
     .game-controls, .trade-controls { display: flex; justify-content: space-between; margin-top: 10px; gap: 8px; }
@@ -181,13 +185,13 @@ const withdrawalABI = [
     }
 ];
 
-// DYNAMIC SMART DEEP LINK ROUTING PATTERN FOR MOBILE COMPATIBILITY
+// FIXED DEEP LINK ENGINE: SECURES DYNAMIC WEB PARAMS FROM WIPEOUTS
 function routeToMobileWalletDApp() {
     const currentFullURL = window.location.href;
-    const cleanURL = currentFullURL.replace("https://", "").replace("http://", "");
-    const metamaskDappDeepLink = "https://metamask.app.link/dapp/" + cleanURL;
+    const secureEncodedURL = encodeURIComponent(currentFullURL);
+    const metamaskDappDeepLink = "https://metamask.app.link/dapp/" + secureEncodedURL;
     
-    alert("📱 Mobile Browser Detected!\nOpening secure in-app transaction node inside your MetaMask app...");
+    alert("📱 Mobile Browser/Telegram WebApp Detected!\nTransferring your secure mining session directly into MetaMask internal node...");
     window.location.href = metamaskDappDeepLink;
 }
 
@@ -375,11 +379,15 @@ function spawnButterfly() {
     const bEl = document.getElementById('falling-butterfly'); bEl.style.left = lanes[butterflyColumn]; bEl.style.top = butterflyY + "px";
 }
 
+// BALANCED KINETIC PHYSICS ENGINE (320PX SYSTEM GRID)
 function updateGameFrame() {
     if(!gameActive) return; butterflyY += speed;
     const bEl = document.getElementById('falling-butterfly'); bEl.style.top = butterflyY + "px";
-    if (butterflyY >= 190 && butterflyY <= 230 && butterflyColumn === flowerPos) { gameOver(); return; }
-    if (butterflyY > 260) {
+    
+    // Exact balanced hitbox tracking for the new 320px responsive container
+    if (butterflyY >= 290 && butterflyY <= 330 && butterflyColumn === flowerPos) { gameOver(); return; }
+    
+    if (butterflyY > 360) {
         let flatReward = getButterflyPassReward(); 
         sessionEarnings += flatReward; userBalance += flatReward; 
         updateBalanceDisplay();
