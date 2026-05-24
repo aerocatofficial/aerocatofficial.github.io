@@ -211,25 +211,26 @@ function getMiningPerSecondReward() {
     if (globalUsersCount <= 1000) return 0.0555;
     if (globalUsersCount <= 1000000) {
         let progress = (globalUsersCount - 1000) / 999000;
-        return clamp(0.0555 - (progress * (0.0555 - 0.0013)), 0.0013, 0.0555);
+        return clamp(0.0555 - (progress * (0.0555 - 0.013)), 0.013, 0.0555);
     } else {
         let progress = (globalUsersCount - 1000000) / 9000000;
-        return clamp(0.0013 - (progress * (0.0013 - 0.0000013)), 0.0000013, 0.0013);
+        return clamp(0.013 - (progress * (0.013 - 0.0000013)), 0.0000013, 0.013);
     }
 }
 
-function getButterflyFrameReward() {
-    if (globalUsersCount <= 1000) return 0.2 / 75; 
+// --- 👑 FIXED FLAT PER-BUTTERFLY khazana LOGIC 👑 ---
+function getButterflyPassReward() {
+    if (globalUsersCount <= 1000) return 0.2; // Shuruat me 1 Butterfly safe bypass = pure 0.2 ACAT Flat!
     if (globalUsersCount <= 1000000) {
         let progress = (globalUsersCount - 1000) / 999000;
-        let fullReward = 0.2 - (progress * (0.2 - 0.015));
-        return clamp(fullReward / 75, 0.015 / 75, 0.2 / 75);
+        return clamp(0.2 - (progress * (0.2 - 0.015)), 0.015, 0.2); // 10 Lakh par exact 0.015 ACAT
     } else {
         let progress = (globalUsersCount - 1000000) / 9000000;
-        let fullReward = 0.015 - (progress * (0.015 - 0.0000015));
-        return clamp(fullReward / 75, 0.0000015 / 75, 0.015 / 75);
+        return clamp(0.015 - (progress * (0.015 - 0.0000015)), 0.0000015, 0.015); // 100 Lakh par exact 0.0000015 ACAT
     }
 }
+
+function getButterflyFrameReward() { return 0; } // Backward legacy bridge bypass
 
 function getBuyPoolSwapRate() {
     if (globalUsersCount <= 1000) return 25000;
@@ -365,28 +366,33 @@ function spawnButterfly() {
     const bEl = document.getElementById('falling-butterfly'); bEl.style.left = lanes[butterflyColumn]; bEl.style.top = butterflyY + "px";
 }
 
+// --- ENGINE RESTRUCTURED FOR FLAT INCREMENTS ---
 function updateGameFrame() {
     if(!gameActive) return; butterflyY += speed;
     const bEl = document.getElementById('falling-butterfly'); bEl.style.top = butterflyY + "px";
     if (butterflyY >= 190 && butterflyY <= 230 && butterflyColumn === flowerPos) { gameOver(); return; }
+    
+    // Increment only when user successfully dodges a butterfly completely
     if (butterflyY > 260) {
-        let calculatedReward = getButterflyFrameReward(); 
-        sessionEarnings += calculatedReward; userBalance += calculatedReward; 
+        let flatReward = getButterflyPassReward(); 
+        sessionEarnings += flatReward; 
+        userBalance += flatReward; 
         updateBalanceDisplay();
-        if(sessionEarnings % 100 === 0) speed += 0.5; spawnButterfly();
+        
+        if(Math.round(sessionEarnings * 10) % 5 === 0) speed += 0.3; 
+        spawnButterfly();
     }
 }
 
 async function gameOver() {
     gameActive = false; clearInterval(gameLoopInterval); playBoomSound();
-    let calculatedReward = getButterflyFrameReward() * 2; 
-    sessionEarnings += calculatedReward; userBalance += calculatedReward;
-    updateBalanceDisplay();
+    
+    // Clear and clean data sync directly upon collision
     await updateFirebase({ points: userBalance });
     const overlay = document.getElementById('gameover-overlay');
     if (overlay) {
         overlay.style.display = 'flex';
-        document.getElementById('earned-session').innerText = `Mined: +${sessionEarnings.toLocaleString(undefined, {maximumFractionDigits: 4})} ACAT`;
+        document.getElementById('earned-session').innerText = `Mined: +${sessionEarnings.toLocaleString(undefined, {minimumFractionDigits: 1, maximumFractionDigits: 4})} ACAT`;
     }
 }
 
