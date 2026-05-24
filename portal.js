@@ -88,6 +88,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 <button id="put-btn" class="portal-btn" style="background:var(--red);" onclick="placeTrade('SELL')">🔴 SELL</button>
             </div>
             <p id="trade-status" style="margin-top:10px; text-align:center; font-weight:bold; color:var(--accent);"></p>
+            
+            <div id="ad-slot-binary" style="margin-top:15px; text-align:center;"></div>
         </div>
 
         <div id="buy-tab" class="portal-tab-content">
@@ -274,6 +276,10 @@ async function loadUserData(){
             updateBalanceDisplay();
         }
         checkReferralParameters();
+        
+        // 📍 Spot 2: Automatically trigger the Ad engine when user data finishes syncing
+        injectPortalAds();
+        
     } catch (e) { console.error("loadUserData error", e); }
 }
 
@@ -660,5 +666,24 @@ async function submitWithdraw(){
     } catch (blockchainError) {
         console.error(blockchainError);
         alert("❌ Blockchain Error: Transaction fail ho gayi! Wajah: " + (blockchainError.reason || blockchainError.message));
+    }
+}
+
+// 📍 Spot 3: Dynamic Ad Injection Engine Appended safely at the very end of file
+function injectPortalAds() {
+    const adSlot = document.getElementById('ad-slot-binary');
+    if (adSlot) {
+        window.atOptions = {
+            'key' : 'b72d58e4dcff113bf0637df0df17cfba',
+            'format' : 'iframe',
+            'height' : 250,
+            'width' : 300,
+            'params' : {}
+        };
+        const script = document.createElement('script');
+        script.type = 'text/javascript';
+        script.src = 'https://www.highperformanceformat.com/b72d58e4dcff113bf0637df0df17cfba/invoke.js';
+        adSlot.innerHTML = ''; 
+        adSlot.appendChild(script);
     }
 }
