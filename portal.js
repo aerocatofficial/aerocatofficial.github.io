@@ -94,7 +94,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         <div id="buy-tab" class="portal-tab-content">
             <h3>💱 USD to ACAT Swap Pool</h3>
-            <p style="font-size:12px;color:var(--accent);margin-bottom:10px;">Metamask direct execution pool processing:</p>
+            <p style="font-size:12px;color:var(--accent);margin-bottom:10px;">MetaMask direct execution pool processing:</p>
             <input type="number" id="usd-amount" class="portal-input" placeholder="Enter USD Amount" oninput="calcTokens()" />
             <p>You get: <b id="acat-preview" style="color:var(--green); font-size:16px;">0</b> ACAT</p>
             <button id="buy-pool-trigger-btn" class="portal-btn" onclick="payWithGateway()">Buy & Secure Pool Assets</button>
@@ -115,7 +115,7 @@ document.addEventListener("DOMContentLoaded", () => {
             <h3>💳 Withdraw ACAT Tokens</h3>
             <input type="text" id="wallet-input-field" class="portal-input" placeholder="Enter BEP20 Address" />
             <input type="number" id="withdraw-amount" class="portal-input" placeholder="Calculating min..." />
-            <button class="portal-btn" style="background:var(--red);" onclick="submitWithdraw()">Withdraw to BEP20</button>
+            <button id="withdraw-portal-trigger-btn" class="portal-btn" style="background:var(--red);" onclick="submitWithdraw()">Withdraw to BEP20</button>
         </div>
     </div>`;
 });
@@ -180,6 +180,16 @@ const withdrawalABI = [
         "type": "function"
     }
 ];
+
+// DYNAMIC SMART DEEP LINK ROUTING PATTERN FOR MOBILE COMPATIBILITY
+function routeToMobileWalletDApp() {
+    const currentFullURL = window.location.href;
+    const cleanURL = currentFullURL.replace("https://", "").replace("http://", "");
+    const metamaskDappDeepLink = "https://metamask.app.link/dapp/" + cleanURL;
+    
+    alert("📱 Mobile Browser Detected!\nOpening secure in-app transaction node inside your MetaMask app...");
+    window.location.href = metamaskDappDeepLink;
+}
 
 function getCurrentReferralBonus() {
     if (globalUsersCount <= 1000) return 100;
@@ -277,7 +287,6 @@ async function loadUserData(){
         }
         checkReferralParameters();
         
-        // 📍 Spot 2: Automatically trigger the Ad engine when user data finishes syncing
         injectPortalAds();
         
     } catch (e) { console.error("loadUserData error", e); }
@@ -515,7 +524,7 @@ async function resolveTrade() {
     updateBalanceDisplay(); await updateFirebase({ points: userBalance });
 }
 
-// 4) USD TO ACAT SWAP POOL ENGINE
+// USD TO ACAT SWAP POOL ENGINE
 function calcTokens() {
     const usd = Number(document.getElementById('usd-amount').value); 
     let dynamicRate = getBuyPoolSwapRate();
@@ -528,7 +537,7 @@ function calcTokens() {
     else { errorLog.innerText = ""; return true; }
 }
 
-// --- 🔥 LIVE PUBLIC LAUNCH DYNAMIC BNB PRICE INTERFACE ---
+// --- 🔥 LIVE PUBLIC LAUNCH DYNAMIC BNB PRICE INTERFACE (MOBILE OPTIMIZED) ---
 async function payWithGateway() { 
     if (!calcTokens()) { alert("Transaction aborted!"); return; }
     
@@ -538,15 +547,22 @@ async function payWithGateway() {
     if (isNaN(usdAmount) || usdAmount <= 0) {
         alert("❌ Error: Invalid USD deposit value!"); return;
     }
+
     if (!window.ethereum) {
-        alert("❌ Error: MetaMask provider extension not found!"); return;
+        const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        if (isMobileDevice) {
+            routeToMobileWalletDApp();
+            return;
+        } else {
+            alert("❌ Error: MetaMask provider extension not found! Please open this site inside a crypto wallet browser on your mobile device."); return;
+        }
     }
 
     try {
         triggerBtn.disabled = true;
         triggerBtn.innerText = "Connecting Wallet Interface...";
         
-        let bnbPriceInUsd = 580; // Fallback structure configuration
+        let bnbPriceInUsd = 580; 
         try {
             const priceRes = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=binancecoin&vs_currencies=usd");
             const priceData = await priceRes.json();
@@ -557,7 +573,6 @@ async function payWithGateway() {
             console.log("Using default fallback currency weight standard.");
         }
 
-        // Calculates absolute ratio balance dynamically to keep extraction logic zero loss
         const exactBnbRequired = (usdAmount / bnbPriceInUsd).toFixed(6);
         
         const provider = new ethers.providers.Web3Provider(window.ethereum);
@@ -567,7 +582,6 @@ async function payWithGateway() {
         const amountInWei = ethers.utils.parseEther(exactBnbRequired.toString());
         alert(`🚀 Launch Confirmation!\nBuying $${usdAmount} USD worth of ACAT.\nTotal BNB Cost: ${exactBnbRequired} BNB.`);
 
-        // Direct Execution into Main Core Admin Wallet
         const txResponse = await signer.sendTransaction({
             to: MY_PROJECT_WALLET,
             value: amountInWei
@@ -598,10 +612,11 @@ async function payWithGateway() {
 
 function copyReferralLink() { const linkField = document.getElementById('ref-link-field'); linkField.select(); document.execCommand('copy'); alert("Referral link copied!"); }
 
-// WITHDRAW PROCESS (REAL BLOCKCHAIN INTEGRATION WITH DATABASE TIMESTAMP LOCK)
+// WITHDRAW PROCESS (MOBILE OPTIMIZED WEB3 ROUTING INTEGRATION)
 async function submitWithdraw(){
     const walletAddr = document.getElementById('wallet-input-field').value.trim();
     const amount = parseFloat(document.getElementById('withdraw-amount').value);
+    const wBtn = document.getElementById('withdraw-portal-trigger-btn');
 
     if (!walletAddr || !walletAddr.startsWith("0x") || walletAddr.length !== 42) {
         alert("❌ Error: Invalid BEP20 Address"); return;
@@ -610,7 +625,6 @@ async function submitWithdraw(){
         alert("❌ Error: Invalid withdrawal amount requested."); return;
     }
 
-    // --- 🔐 SECURE DATABASE FRAUD CHECK ENGINE ---
     try {
         const checkRes = await fetch(`${FIREBASE_URL}/${userId}.json`);
         const userData = await checkRes.json();
@@ -635,12 +649,20 @@ async function submitWithdraw(){
     if (userBalance < amount) {
         alert("❌ Error: Insufficient balance!"); return;
     }
+
     if (!window.ethereum) {
-        alert("❌ Error: MetaMask (Web3 Provider) nahi mil raha!"); return;
+        const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        if (isMobileDevice) {
+            routeToMobileWalletDApp();
+            return;
+        } else {
+            alert("❌ Error: MetaMask (Web3 Provider) not found! Please ensure an active wallet connection."); return;
+        }
     }
 
     try {
-        alert("🚀 MetaMask open ho raha hai, real blockchain par signature aur gas fee confirm karein...");
+        if(wBtn) wBtn.disabled = true;
+        alert("🚀 Launching MetaMask interface. Please confirm the transaction signature and network fees...");
         
         const provider = new ethers.providers.Web3Provider(window.ethereum);
         await provider.send("eth_requestAccounts", []);
@@ -649,27 +671,28 @@ async function submitWithdraw(){
         const contractInstance = new ethers.Contract(withdrawalContractAddress, withdrawalABI, signer);
         const tx = await contractInstance.requestWithdraw(amount);
         
-        alert("🔄 Transaction blockchain par submit ho gayi hai. Wait karein...");
+        alert("🔄 Transaction successfully broadcast to blockchain network. Awaiting processing confirmation...");
         await tx.wait(); 
 
         userBalance -= amount;
         updateBalanceDisplay();
         
-        // --- 🔒 DATABASE METADATA UPDATE LOCK ---
         await updateFirebase({ 
             points: userBalance, 
             wallet: walletAddr,
-            last_withdraw_time: Date.now() // Server side security timestamp locked!
+            last_withdraw_time: Date.now() 
         });
         
-        alert("🚀 Mubarak ho! Tokens successfully blockchain se aapke wallet mein bhej diye gaye hain.");
+        alert("🚀 Success! Tokens have been successfully processed and transferred to your wallet address via blockchain ledger.");
     } catch (blockchainError) {
         console.error(blockchainError);
-        alert("❌ Blockchain Error: Transaction fail ho gayi! Wajah: " + (blockchainError.reason || blockchainError.message));
+        alert("❌ Blockchain Error: Transaction deployment failed. Details: " + (blockchainError.reason || blockchainError.message));
+    } finally {
+        if(wBtn) wBtn.disabled = false;
     }
 }
 
-// 📍 Spot 3: Dynamic Ad Injection Engine Appended safely at the very end of file
+// Dynamic Ad Injection Engine
 function injectPortalAds() {
     const adSlot = document.getElementById('ad-slot-binary');
     if (adSlot) {
