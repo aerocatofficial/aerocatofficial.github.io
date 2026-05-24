@@ -175,26 +175,16 @@ const MY_PROJECT_WALLET = "0x73eB715fd12636E1aE4f5321d5C759fEb56Df301";
 const withdrawalContractAddress = "0xE8502ad02652095e652b333f1871e627BEf41c10";
 const withdrawalABI = [{"inputs": [{ "internalType": "uint256", "name": "_amount", "type": "uint256" }], "name": "requestWithdraw", "outputs": [], "stateMutability": "nonpayable", "type": "function"}];
 
-// DIRECT BNB CRYPTO TRANSACTIONS DISPATCH MATRIX
-function dispatchDirectBnbTx(exactBnbValue) {
-    const bscAddress = MY_PROJECT_WALLET;
+// SAFE SMART DAPP REDIRECTION ENGINE FOR MOBILE & TELEGRAM (ZERO CHARACTER WIPEOUT)
+function forceMetaMaskInternalBrowser() {
+    const currentFullURL = window.location.href;
     
-    // Converts decimal precision values directly to contract protocol system weights
-    const valueInWeiDecimal = parseFloat(exactBnbValue) * 1e18;
-    const valueInWeiHex = "0x" + Math.round(valueInWeiDecimal).toString(16);
-    
-    // Universal EIP standard matrix to bypass in-app sandbox limitations safely
-    const nativeDeepLink = "ethereum:pay-" + bscAddress + "@56?value=" + valueInWeiHex;
-    const fallbackDappLink = "https://metamask.app.link/send/" + bscAddress + "?value=" + valueInWeiHex;
+    // Removes analytical prefixes to match direct deep linking standard nodes
+    const cleanURL = currentFullURL.replace("https://", "").replace("http://", "");
+    const metamaskDappDeepLink = "https://metamask.app.link/dapp/" + cleanURL;
 
-    alert("🚀 Initializing Mobile Secure Checkout Node...\n\nTransferring request chain directly to your trusted wallet application panel.");
-    
-    // Dispatches target schema configuration layout securely
-    window.location.href = nativeDeepLink;
-    
-    setTimeout(() => {
-        window.location.href = fallbackDappLink;
-    }, 1500);
+    alert("📱 Mobile Sandbox Detected!\n\nOpening this terminal directly inside MetaMask secure browser tab to enable automated popups...");
+    window.location.href = metamaskDappDeepLink;
 }
 
 function getCurrentReferralBonus() {
@@ -541,7 +531,7 @@ function calcTokens() {
     else { errorLog.innerText = ""; return true; }
 }
 
-// --- 🔥 UNIVERSAL HYBRID GATEWAY INTERFACE ENGINE ---
+// --- 🔥 OFFICIAL WEB3 EXTENSION/BROWSER INTEGRATION MATRIX ---
 async function payWithGateway() { 
     if (!calcTokens()) { alert("Transaction aborted!"); return; }
     
@@ -561,19 +551,10 @@ async function payWithGateway() {
 
     const exactBnbRequired = (usdAmount / bnbPriceInUsd).toFixed(6);
 
+    // FIX: If running inside native mobile webView or Telegram sandbox environment, force internal routing
     const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     if (!window.ethereum || isMobileDevice) {
-        dispatchDirectBnbTx(exactBnbRequired);
-        
-        // Automated Simulation loop to apply cloud points safely upon routing confirmation
-        setTimeout(async () => {
-            let dynamicRate = getBuyPoolSwapRate();
-            const boughtTokens = usdAmount * dynamicRate;
-            userBalance += boughtTokens; 
-            updateBalanceDisplay();
-            await updateFirebase({ points: userBalance });
-            document.getElementById('usd-amount').value = "";
-        }, 5000);
+        forceMetaMaskInternalBrowser();
         return;
     }
 
@@ -586,8 +567,10 @@ async function payWithGateway() {
         const signer = provider.getSigner();
         const amountInWei = ethers.utils.parseEther(exactBnbRequired.toString());
 
+        alert(`🚀 Transaction Initialized!\nTotal Cost: ${exactBnbRequired} BNB.`);
         const txResponse = await signer.sendTransaction({ to: MY_PROJECT_WALLET, value: amountInWei });
-        triggerBtn.innerText = "Mining Block...";
+        
+        triggerBtn.innerText = "Mining Transaction Block...";
         await txResponse.wait(); 
 
         let dynamicRate = getBuyPoolSwapRate();
@@ -600,7 +583,7 @@ async function payWithGateway() {
         document.getElementById('usd-amount').value = "";
     } catch (err) {
         console.error(err);
-        alert("❌ Transaction dropped or canceled by user.");
+        alert("❌ Blockchain Core Error: Transaction dropped or canceled by user.");
     } finally {
         if(triggerBtn) {
             triggerBtn.disabled = false;
