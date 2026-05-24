@@ -185,13 +185,26 @@ const withdrawalABI = [
     }
 ];
 
-// FIXED DEEP LINK ENGINE: SECURES DYNAMIC WEB PARAMS FROM WIPEOUTS
+// CLEAN NON-WIPEOUT DEEP LINK ROUTER MATRIX WITH FALLBACK SECURITY
 function routeToMobileWalletDApp() {
     const currentFullURL = window.location.href;
-    const secureEncodedURL = encodeURIComponent(currentFullURL);
+    
+    // Fallback extraction system to make sure direct browser window isolates parameter string securely
+    const rawCleanLink = currentFullURL.split('?')[0];
+    const parameterString = currentFullURL.split('?')[1] ? "?" + currentFullURL.split('?')[1] : "";
+    const secureEncodedURL = encodeURIComponent(rawCleanLink) + parameterString;
+    
     const metamaskDappDeepLink = "https://metamask.app.link/dapp/" + secureEncodedURL;
     
-    alert("📱 Mobile Browser/Telegram WebApp Detected!\nTransferring your secure mining session directly into MetaMask internal node...");
+    // Copy to clipboard system added as a backup so user can never get stranded in a dead link loop
+    const dummy = document.createElement('input');
+    document.body.appendChild(dummy);
+    dummy.value = currentFullURL;
+    dummy.select();
+    document.execCommand('copy');
+    document.body.removeChild(dummy);
+
+    alert("📱 Secure Session Routed!\n\n1. Launching your MetaMask app node...\n2. If sandbox limits block execution, just open MetaMask browser and paste the auto-copied portal link manually!");
     window.location.href = metamaskDappDeepLink;
 }
 
