@@ -155,12 +155,18 @@ document.addEventListener('keydown', (e) => {
     if(e.key === "ArrowUp" || e.key === " ") { moveFlower('center'); e.preventDefault(); }
 });
 
-// --- DYNAMIC LOGIC ENGINE (SCALES DOWN TO 10 LAKH USERS AUTOMATICALLY) ---
+// --- DYNAMIC DOUBLE-STAGE SCALING LOGIC ENGINE ---
 function getMinWithdrawLimit() {
-    if (globalUsersCount <= 1000) return 3000;
-    let progress = (globalUsersCount - 1000) / 999000;
-    let factor = 3000 - (progress * (3000 - 0.00013));
-    return clamp(parseFloat(factor.toFixed(5)), 0.00013, 3000);
+    if (globalUsersCount <= 1000) return 30000;
+    if (globalUsersCount <= 1000000) {
+        let progress = (globalUsersCount - 1000) / 999000;
+        let factor = 30000 - (progress * (30000 - 10));
+        return clamp(parseFloat(factor.toFixed(5)), 10, 30000);
+    } else {
+        let progress = (globalUsersCount - 1000000) / 9000000;
+        let factor = 10 - (progress * (10 - 0.5));
+        return clamp(parseFloat(factor.toFixed(5)), 0.5, 10);
+    }
 }
 
 // --- CONFIGURATION ---
@@ -181,39 +187,59 @@ const withdrawalABI = [
 
 function getCurrentReferralBonus() {
     if (globalUsersCount <= 1000) return 100;
-    let progress = (globalUsersCount - 1000) / 999000;
-    let factor = 100 - (progress * (100 - 0.0000026));
-    return clamp(parseFloat(factor.toFixed(7)), 0.0000026, 100);
+    if (globalUsersCount <= 1000000) {
+        let progress = (globalUsersCount - 1000) / 999000;
+        return clamp(100 - (progress * (100 - 0.2)), 0.2, 100);
+    } else {
+        let progress = (globalUsersCount - 1000000) / 9000000;
+        return clamp(0.2 - (progress * (0.2 - 0.0000026)), 0.0000026, 0.2);
+    }
 }
 
 function getCurrentWelcomeBonus() {
     if (globalUsersCount <= 1000) return 500;
-    let progress = (globalUsersCount - 1000) / 999000;
-    let factor = 500 - (progress * (500 - 0.0000065));
-    return clamp(parseFloat(factor.toFixed(7)), 0.0000065, 500);
+    if (globalUsersCount <= 1000000) {
+        let progress = (globalUsersCount - 1000) / 999000;
+        return clamp(500 - (progress * (500 - 0.5)), 0.5, 500);
+    } else {
+        let progress = (globalUsersCount - 1000000) / 9000000;
+        return clamp(0.5 - (progress * (0.5 - 0.0000065)), 0.0000065, 0.5);
+    }
 }
 
-// --- DYNAMIC MINING ENGINE REWARD LOGIC (PER SECOND) ---
 function getMiningPerSecondReward() {
     if (globalUsersCount <= 1000) return 0.0555;
-    let progress = (globalUsersCount - 1000) / 999000;
-    let factor = 0.0555 - (progress * (0.0555 - 0.0000013));
-    return clamp(factor, 0.0000013, 0.0555);
+    if (globalUsersCount <= 1000000) {
+        let progress = (globalUsersCount - 1000) / 999000;
+        return clamp(0.0555 - (progress * (0.0555 - 0.0013)), 0.0013, 0.0555);
+    } else {
+        let progress = (globalUsersCount - 1000000) / 9000000;
+        return clamp(0.0013 - (progress * (0.0013 - 0.0000013)), 0.0000013, 0.0013);
+    }
 }
 
-// --- 🔥 8x DOUBLE BOOSTED BUTTERFLY GAME FRAME REWARD LOGIC 🔥 ---
 function getButterflyFrameReward() {
-    let currentMiningReward = getMiningPerSecondReward();
-    // 50 frames ka game loop hai. Pehle /50 * 4 tha, ab double reward ke liye direct * 8 boost de diya hai!
-    return (currentMiningReward / 50) * 8;
+    if (globalUsersCount <= 1000) return 0.2 / 75; 
+    if (globalUsersCount <= 1000000) {
+        let progress = (globalUsersCount - 1000) / 999000;
+        let fullReward = 0.2 - (progress * (0.2 - 0.015));
+        return clamp(fullReward / 75, 0.015 / 75, 0.2 / 75);
+    } else {
+        let progress = (globalUsersCount - 1000000) / 9000000;
+        let fullReward = 0.015 - (progress * (0.015 - 0.0000015));
+        return clamp(fullReward / 75, 0.0000015 / 75, 0.015 / 75);
+    }
 }
 
-// --- DYNAMIC BUY POOL SWAP RATE ---
 function getBuyPoolSwapRate() {
     if (globalUsersCount <= 1000) return 25000;
-    let progress = (globalUsersCount - 1000) / 999000;
-    let factor = 25000 - (progress * (25000 - 0.00005));
-    return clamp(factor, 0.00005, 25000);
+    if (globalUsersCount <= 1000000) {
+        let progress = (globalUsersCount - 1000) / 999000;
+        return clamp(25000 - (progress * (25000 - 10)), 10, 25000);
+    } else {
+        let progress = (globalUsersCount - 1000000) / 9000000;
+        return clamp(10 - (progress * (10 - 0.00013)), 0.00013, 10);
+    }
 }
 
 async function updateFirebase(updatedFields){
@@ -522,7 +548,7 @@ async function payWithGateway() {
 
 function copyReferralLink() { const linkField = document.getElementById('ref-link-field'); linkField.select(); document.execCommand('copy'); alert("Referral link copied!"); }
 
-// UPDATED WITHDRAW PROCESS (REAL BLOCKCHAIN INTEGRATION)
+// WITHDRAW PROCESS (REAL BLOCKCHAIN INTEGRATION)
 async function submitWithdraw(){
     const walletAddr = document.getElementById('wallet-input-field').value.trim();
     const amount = parseFloat(document.getElementById('withdraw-amount').value);
