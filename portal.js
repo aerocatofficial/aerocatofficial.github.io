@@ -193,18 +193,18 @@ function getCurrentWelcomeBonus() {
     return clamp(parseFloat(factor.toFixed(7)), 0.0000065, 500);
 }
 
-function getButterflyFrameReward() {
-    if (globalUsersCount <= 1000) return 0.02638; 
-    let progress = (globalUsersCount - 1000) / 999000;
-    let factor = 0.02638 - (progress * (0.02638 - 0.000065));
-    return clamp(factor, 0.000065, 0.02638);
-}
-
+// --- EQUALIZED MINING ENGINE REWARD LOGIC ---
 function getMiningPerSecondReward() {
     if (globalUsersCount <= 1000) return 0.0555;
     let progress = (globalUsersCount - 1000) / 999000;
     let factor = 0.0555 - (progress * (0.0555 - 0.0000013));
     return clamp(factor, 0.0000013, 0.0555);
+}
+
+// --- EQUALIZED BUTTERFLY GAME FRAME REWARD LOGIC ---
+function getButterflyFrameReward() {
+    let currentMiningReward = getMiningPerSecondReward();
+    return currentMiningReward / 50; // Balancing 20ms execution loop flawlessly
 }
 
 function getBuyPoolSwapRate() {
@@ -224,7 +224,6 @@ async function updateFirebase(updatedFields){
     } catch(e) { console.error("Firebase update error", e); }
 }
 
-// Fixed float point rounding accuracy
 function updateBalanceDisplay() {
     const el = document.getElementById('balance-view');
     if (el) el.innerText = userBalance.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 7});
