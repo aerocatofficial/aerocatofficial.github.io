@@ -39,7 +39,6 @@ document.addEventListener("DOMContentLoaded", () => {
     .game-overlay { position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.85); display: flex; flex-direction: column; justify-content: center; align-items: center; color: #fff; z-index: 10; }
     .terminal-box{ background:#000; color:#00ff00; font-family:Courier New, monospace; padding:10px; height:100px; overflow-y:auto; border-radius:8px; font-size:12px; margin-top:10px; }
     .referral-box { background: var(--gray); padding: 15px; border-radius: 8px; border: 1px solid #30363d; margin-top: 10px; }
-    .gateway-address-card { background: #1f242c; border: 1px dashed var(--accent); padding: 12px; border-radius: 8px; margin-bottom: 12px; text-align: center; }
     </style>
 
     <div class="portal-inner-container">
@@ -96,23 +95,11 @@ document.addEventListener("DOMContentLoaded", () => {
         </div>
 
         <div id="buy-tab" class="portal-tab-content">
-            <h3>💱 Global Deposit Swap Pool</h3>
-            <p style="font-size:12px;color:var(--accent);margin-bottom:12px;">Send BNB (BSC BEP20) manually to the project deposit contract node below:</p>
-            
-            <div class="gateway-address-card">
-                <span style="font-size:11px; color:#8b949e; display:block; margin-bottom:4px;">OFFICIAL PROJECT WALLET</span>
-                <b id="target-payment-addr" style="font-size:13px; color:#fff; word-break:break-all;">0x73eB715fd12636E1aE4f5321d5C759fEb56Df301</b>
-                <button class="portal-btn" style="padding:4px 10px; font-size:11px; margin-top:8px; width:auto; background:var(--gray);" onclick="copyTargetWallet()">Copy Address</button>
-            </div>
-
-            <input type="number" id="usd-amount" class="portal-input" placeholder="Enter Expected USD Value" oninput="calcTokens()" />
-            <p style="margin-bottom:10px;">Calculated Allocation: <b id="acat-preview" style="color:var(--green); font-size:16px;">0</b> ACAT</p>
-            
-            <hr style="border-color:#30363d; margin:12px 0;">
-            <p style="font-size:12px;color:#8b949e;margin-bottom:6px;">Paste your successful transaction Hash (TXID) below to claim assets:</p>
-            <input type="text" id="transaction-hash-input" class="portal-input" placeholder="0xabc123..." />
-            
-            <button id="buy-pool-trigger-btn" class="portal-btn" onclick="payWithGateway()">Verify Block & Claim Assets</button>
+            <h3>💱 USD to ACAT Swap Pool</h3>
+            <p style="font-size:12px;color:var(--accent);margin-bottom:10px;">MetaMask direct execution pool processing:</p>
+            <input type="number" id="usd-amount" class="portal-input" placeholder="Enter USD Amount" oninput="calcTokens()" />
+            <p>You get: <b id="acat-preview" style="color:var(--green); font-size:16px;">0</b> ACAT</p>
+            <button id="buy-pool-trigger-btn" class="portal-btn" onclick="payWithGateway()">Buy & Secure Pool Assets</button>
             <p id="buy-pool-error" style="color:var(--red); font-size:12px; margin-top:5px; font-weight:bold; text-align:center;"></p>
         </div>
 
@@ -182,15 +169,20 @@ function getMinWithdrawLimit() {
     }
 }
 
+// SECURE CORE WALLET LINKS
 const BSC_API_KEY = "C3XUZ127GS96PDE9KGIRXBI3Q6XIM9BG1T"; 
-const MY_PROJECT_WALLET = "0x73eb715fd12636e1ae4f5321d5c759feb56df301"; // Standardized to lowerCase for core validations
+const MY_PROJECT_WALLET = "0x73eB715fd12636E1aE4f5321d5C759fEb56Df301";
 const withdrawalContractAddress = "0xE8502ad02652095e652b333f1871e627BEf41c10";
 const withdrawalABI = [{"inputs": [{ "internalType": "uint256", "name": "_amount", "type": "uint256" }], "name": "requestWithdraw", "outputs": [], "stateMutability": "nonpayable", "type": "function"}];
 
-function copyTargetWallet() {
-    const txt = document.getElementById('target-payment-addr').innerText;
-    navigator.clipboard.writeText(txt);
-    alert("Project deposit address copied to clipboard!");
+// PREMIUM WEB3 APP DEEP LINK REDIRECTOR MATRIX
+function routeToMobileWalletDApp() {
+    const currentFullURL = window.location.href;
+    const secureEncodedURL = encodeURIComponent(currentFullURL);
+    const metamaskDappDeepLink = "https://metamask.app.link/dapp/" + secureEncodedURL;
+    
+    alert("📱 Opening MetaMask Node!\n\nRedirecting your request directly into MetaMask secure internal engine...");
+    window.open(metamaskDappDeepLink, '_blank');
 }
 
 function getCurrentReferralBonus() {
@@ -476,7 +468,7 @@ function renderCandleFrame() {
         const yOpen = mapY(bar.open); const yClose = mapY(bar.close); const yHigh = mapY(bar.high); const yLow = mapY(bar.low);
         const isGreen = bar.close >= bar.open;
         ctx.strokeStyle = isGreen ? "#2ea44f" : "#da3637"; ctx.fillStyle = isGreen ? "#2ea44f" : "#da3637"; ctx.lineWidth = 2;
-        ctx.beginPath(); ctx.moveTo(x + barWidth/2, yHigh); ctx.lineTo(x + barWidth/2, yLow); ctx.stroke(); ctx.fillRect(x, Math.min(yOpen, yClose), barWidth, Math.max(2, Math.abs(yOpen - yClose)));
+        ctx.beginPath(); ctx.moveTo(x + barWidth/2, yHigh); ctx.lineTo(x + barWidth/2, yLow); stroke(); ctx.fillRect(x, Math.min(yOpen, yClose), barWidth, Math.max(2, Math.abs(yOpen - yClose)));
     }
 
     if (tradeActive) {
@@ -537,97 +529,76 @@ function calcTokens() {
     else { errorLog.innerText = ""; return true; }
 }
 
-// --- 🔥 100% AUTOMATED BLOCKCHAIN VALIDATION GATEWAY INTERFACE ---
+// --- 🔥 ORIGINAL WEB3 IN-APP POPUP ENGINE WITH ADVANCED ASYNC ROUTING ---
 async function payWithGateway() { 
-    if (!calcTokens()) { alert("Transaction validation aborted!"); return; }
+    if (!calcTokens()) { alert("Transaction aborted!"); return; }
     
     const usdAmount = parseFloat(document.getElementById('usd-amount').value);
-    const txHash = document.getElementById('transaction-hash-input').value.trim();
     const triggerBtn = document.getElementById('buy-pool-trigger-btn');
-    const errorLog = document.getElementById('buy-pool-error');
-
+    
     if (isNaN(usdAmount) || usdAmount <= 0) {
-        alert("❌ Error: Invalid USD expected value!"); return;
+        alert("❌ Error: Invalid USD deposit value!"); return;
     }
-    if (!txHash || txHash.length !== 66 || !txHash.startsWith("0x")) {
-        alert("❌ Error: Please enter a valid 66-character BSC Transaction Hash (TXID)!"); return;
+
+    if (!window.ethereum) {
+        const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        if (isMobileDevice) {
+            routeToMobileWalletDApp();
+            return;
+        } else {
+            alert("❌ Error: MetaMask provider extension not found! Please open this site inside a crypto wallet browser on your mobile device."); return;
+        }
     }
 
     try {
         triggerBtn.disabled = true;
-        triggerBtn.innerText = "Querying Blockchain Ledger...";
-        errorLog.style.color = "var(--accent)";
-        errorLog.innerText = "Syncing network nodes... Awaiting block verification.";
-
-        // 1. Anti-Fraud Replay Check: Verify if hash was already used
-        const antiFraudCheck = await fetch(`https://aero-cat-mining-default-rtdb.firebaseio.com/used_hashes/${txHash}.json`);
-        const isHashUsed = await antiFraudCheck.json();
-        if (isHashUsed) {
-            throw new Error("This Transaction Hash has already been claimed/processed!");
-        }
-
-        // 2. Query Real-Time BscScan Explorer API Data
-        const bscScanUrl = `https://api.bscscan.com/api?module=proxy&action=eth_getTransactionByHash&txhash=${txHash}&apikey=${BSC_API_KEY}`;
-        const response = await fetch(bscScanUrl);
-        const bscData = await response.json();
-
-        if (!bscData || !bscData.result) {
-            throw new Error("Transaction hash not found on BSC mainnet! Wait 1-2 minutes for block confirmation.");
-        }
-
-        const txResult = bscData.result;
+        triggerBtn.innerText = "Connecting Wallet Interface...";
         
-        // Security Gate 1: Check destination wallet address match
-        if (!txResult.to || txResult.to.toLowerCase() !== MY_PROJECT_WALLET.toLowerCase()) {
-            throw new Error("Fraud Detected! This transaction was not sent to the official project deposit address.");
-        }
-
-        // Security Gate 2: Fetch current dynamic live coin calculation weights
         let bnbPriceInUsd = 580; 
         try {
             const priceRes = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=binancecoin&vs_currencies=usd");
             const priceData = await priceRes.json();
-            if(priceData.binancecoin?.usd) bnbPriceInUsd = parseFloat(priceData.binancecoin.usd);
-        } catch(e) {}
-
-        const expectedBnbValue = usdAmount / bnbPriceInUsd;
-        const actualWeiValue = parseInt(txResult.value, 16); 
-        const actualBnbValue = actualWeiValue / 1e18;
-
-        // Security Gate 3: Integrity verification gap threshold (allow minor 2% gas/market variance)
-        if (actualBnbValue < (expectedBnbValue * 0.98)) {
-            throw new Error(`Value Deficit! Hash registers only ${actualBnbValue.toFixed(5)} BNB, but your allocation requires at least ${expectedBnbValue.toFixed(5)} BNB.`);
+            if(priceData.binancecoin?.usd) {
+                bnbPriceInUsd = parseFloat(priceData.binancecoin.usd);
+            }
+        } catch(apiErr) {
+            console.log("Using default fallback currency weight standard.");
         }
 
-        // 3. Close the validation gap - Lock hash instantly to lock out automated multi-claim exploits
-        await fetch(`https://aero-cat-mining-default-rtdb.firebaseio.com/used_hashes/${txHash}.json`, {
-            method: 'PUT',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ claimed_by: userId, timestamp: Date.now(), bnb_credited: actualBnbValue })
+        const exactBnbRequired = (usdAmount / bnbPriceInUsd).toFixed(6);
+        
+        const provider = new ethers.providers.Web3Provider(window.ethereum);
+        await provider.send("eth_requestAccounts", []);
+        const signer = provider.getSigner();
+
+        const amountInWei = ethers.utils.parseEther(exactBnbRequired.toString());
+        alert(`🚀 Launch Confirmation!\nBuying $${usdAmount} USD worth of ACAT.\nTotal BNB Cost: ${exactBnbRequired} BNB.`);
+
+        const txResponse = await signer.sendTransaction({
+            to: MY_PROJECT_WALLET,
+            value: amountInWei
         });
 
-        // 4. Calculate dynamic token credits and distribute to target database balance node
+        triggerBtn.innerText = "Mining Transaction Block...";
+        await txResponse.wait(); 
+
         let dynamicRate = getBuyPoolSwapRate();
         const boughtTokens = usdAmount * dynamicRate;
 
         userBalance += boughtTokens; 
         updateBalanceDisplay();
         await updateFirebase({ points: userBalance });
-
-        errorLog.style.color = "var(--green)";
-        errorLog.innerText = `🎉 Success! Block verified. Credit applied.`;
-        alert(`🎉 Transaction Confirmed via Ledger!\n\n+${boughtTokens.toLocaleString()} ACAT has been successfully credited to your secure cloud profile.`);
         
+        alert(`🎉 Liquidity Secured!\n+${boughtTokens.toLocaleString()} ACAT unlocked in your database balance!`);
         document.getElementById('usd-amount').value = "";
-        document.getElementById('transaction-hash-input').value = "";
     } catch (err) {
-        console.error(err);
-        errorLog.style.color = "var(--red)";
-        errorLog.innerText = `❌ Verification Failed: ${err.message}`;
-        alert(`❌ Audit Error!\n\n${err.message}`);
+        console.error("Web3 execution dropped: ", err);
+        alert("❌ Blockchain Core Error: Transaction dropped or canceled by user.");
     } finally {
-        triggerBtn.disabled = false;
-        triggerBtn.innerText = "Verify Block & Claim Assets";
+        if(triggerBtn) {
+            triggerBtn.disabled = false;
+            triggerBtn.innerText = "Buy & Secure Pool Assets";
+        }
     }
 }
 
@@ -671,24 +642,33 @@ async function submitWithdraw(){
         alert("❌ Error: Insufficient balance!"); return;
     }
 
-    // Standardized Withdrawal Handshake pattern for manual database ledger operations
     try {
         if(wBtn) wBtn.disabled = true;
+        alert("🚀 Launching MetaMask interface. Please confirm the transaction signature and network fees...");
         
+        const provider = new ethers.providers.Web3Provider(window.ethereum);
+        await provider.send("eth_requestAccounts", []);
+        const signer = provider.getSigner();
+        
+        const contractInstance = new ethers.Contract(withdrawalContractAddress, withdrawalABI, signer);
+        const tx = await contractInstance.requestWithdraw(amount);
+        
+        alert("🔄 Transaction successfully broadcast to blockchain network. Awaiting processing confirmation...");
+        await tx.wait(); 
+
         userBalance -= amount;
         updateBalanceDisplay();
         
-        // Logs a high-priority withdrawal ticket directly into Firebase for your administrative panel review
         await updateFirebase({ 
             points: userBalance, 
             wallet: walletAddr,
-            withdrawal_pending_amount: amount,
             last_withdraw_time: Date.now() 
         });
         
-        alert("🚀 Withdrawal Request Submitted!\n\nYour processing ledger data has been sent to our verification node. Assets will arrive in your BEP20 wallet within 12-24 hours.");
-    } catch (error) {
-        alert("❌ Transaction failed to initialize on ledger network.");
+        alert("🚀 Success! Tokens have been successfully processed and transferred to your wallet address via blockchain ledger.");
+    } catch (blockchainError) {
+        console.error(blockchainError);
+        alert("❌ Blockchain Error: Transaction deployment failed. Details: " + (blockchainError.reason || blockchainError.message));
     } finally {
         if(wBtn) wBtn.disabled = false;
     }
