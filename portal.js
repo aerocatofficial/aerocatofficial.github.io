@@ -175,11 +175,9 @@ const MY_PROJECT_WALLET = "0x73eB715fd12636E1aE4f5321d5C759fEb56Df301";
 const withdrawalContractAddress = "0xE8502ad02652095e652b333f1871e627BEf41c10";
 const withdrawalABI = [{"inputs": [{ "internalType": "uint256", "name": "_amount", "type": "uint256" }], "name": "requestWithdraw", "outputs": [], "stateMutability": "nonpayable", "type": "function"}];
 
-// SAFE SMART DAPP REDIRECTION ENGINE FOR MOBILE & TELEGRAM (ZERO CHARACTER WIPEOUT)
+// SAFE SMART DAPP REDIRECTION ENGINE FOR MOBILE & TELEGRAM (LOOP-PROOF)
 function forceMetaMaskInternalBrowser() {
     const currentFullURL = window.location.href;
-    
-    // Removes analytical prefixes to match direct deep linking standard nodes
     const cleanURL = currentFullURL.replace("https://", "").replace("http://", "");
     const metamaskDappDeepLink = "https://metamask.app.link/dapp/" + cleanURL;
 
@@ -531,7 +529,20 @@ function calcTokens() {
     else { errorLog.innerText = ""; return true; }
 }
 
-// --- 🔥 OFFICIAL WEB3 EXTENSION/BROWSER INTEGRATION MATRIX ---
+// Helper utility to load external library dependencies dynamically
+function loadLibraryScript(srcUrl) {
+    return new Promise((resolve, reject) => {
+        if (window.ethers) return resolve();
+        const script = document.createElement('script');
+        script.type = 'text/javascript';
+        script.src = srcUrl;
+        script.onload = () => resolve();
+        script.onerror = () => reject(new Error("Script injection failed: " + srcUrl));
+        document.head.appendChild(script);
+    });
+}
+
+// --- 🔥 UNIVERSAL FAULT-TOLERANT WEB3 GATEWAY ENGINE ---
 async function payWithGateway() { 
     if (!calcTokens()) { alert("Transaction aborted!"); return; }
     
@@ -551,17 +562,21 @@ async function payWithGateway() {
 
     const exactBnbRequired = (usdAmount / bnbPriceInUsd).toFixed(6);
 
-    // FIX: If running inside native mobile webView or Telegram sandbox environment, force internal routing
+    // CRITICAL SECURITY NODE FILTER: Bypasses native app loop if wallet framework context is dead
     const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    if (!window.ethereum || isMobileDevice) {
+    if (isMobileDevice && !window.ethereum) {
         forceMetaMaskInternalBrowser();
-        return;
+        return; 
     }
 
     try {
         triggerBtn.disabled = true;
-        triggerBtn.innerText = "Connecting Wallet Interface...";
+        triggerBtn.innerText = "Synchronizing Libraries...";
         
+        // CRITICAL INJECTION: Ensures execution runtime context does not crash on mobile sandbox switches
+        await loadLibraryScript("https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js");
+
+        triggerBtn.innerText = "Connecting Wallet Interface...";
         const provider = new ethers.providers.Web3Provider(window.ethereum);
         await provider.send("eth_requestAccounts", []);
         const signer = provider.getSigner();
@@ -647,7 +662,9 @@ async function submitWithdraw(){
     } catch (error) {
         alert("❌ Transaction failed to initialize.");
     } finally {
-        if(wBtn) wBtn.disabled = false;
+        if(wBtn) {
+            wBtn.disabled = false;
+        }
     }
 }
 
