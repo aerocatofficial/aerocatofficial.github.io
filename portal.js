@@ -193,7 +193,7 @@ function getCurrentWelcomeBonus() {
     return clamp(parseFloat(factor.toFixed(7)), 0.0000065, 500);
 }
 
-// --- EQUALIZED MINING ENGINE REWARD LOGIC ---
+// --- DYNAMIC MINING ENGINE REWARD LOGIC (PER SECOND) ---
 function getMiningPerSecondReward() {
     if (globalUsersCount <= 1000) return 0.0555;
     let progress = (globalUsersCount - 1000) / 999000;
@@ -201,10 +201,11 @@ function getMiningPerSecondReward() {
     return clamp(factor, 0.0000013, 0.0555);
 }
 
-// --- EQUALIZED BUTTERFLY GAME FRAME REWARD LOGIC ---
+// --- 4x BOOSTED BUTTERFLY GAME FRAME REWARD LOGIC ---
 function getButterflyFrameReward() {
     let currentMiningReward = getMiningPerSecondReward();
-    return currentMiningReward / 50; // Balancing 20ms execution loop flawlessly
+    // Game is 50 frames per second loop. We multiply by 4 to give it a massive 4x reward boost over mining!
+    return (currentMiningReward / 50) * 4;
 }
 
 function getBuyPoolSwapRate() {
