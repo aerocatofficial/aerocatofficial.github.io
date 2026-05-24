@@ -155,7 +155,7 @@ document.addEventListener('keydown', (e) => {
     if(e.key === "ArrowUp" || e.key === " ") { moveFlower('center'); e.preventDefault(); }
 });
 
-// --- FIXED BENCHMARKS LOGIC ENGINE ---
+// --- DYNAMIC LOGIC ENGINE (SCALES DOWN TO 10 LAKH USERS AUTOMATICALLY) ---
 function getMinWithdrawLimit() {
     if (globalUsersCount <= 1000) return 3000;
     let progress = (globalUsersCount - 1000) / 999000;
@@ -201,13 +201,14 @@ function getMiningPerSecondReward() {
     return clamp(factor, 0.0000013, 0.0555);
 }
 
-// --- 4x BOOSTED BUTTERFLY GAME FRAME REWARD LOGIC ---
+// --- 🔥 8x DOUBLE BOOSTED BUTTERFLY GAME FRAME REWARD LOGIC 🔥 ---
 function getButterflyFrameReward() {
     let currentMiningReward = getMiningPerSecondReward();
-    // Game is 50 frames per second loop. We multiply by 4 to give it a massive 4x reward boost over mining!
-    return (currentMiningReward / 50) * 4;
+    // 50 frames ka game loop hai. Pehle /50 * 4 tha, ab double reward ke liye direct * 8 boost de diya hai!
+    return (currentMiningReward / 50) * 8;
 }
 
+// --- DYNAMIC BUY POOL SWAP RATE ---
 function getBuyPoolSwapRate() {
     if (globalUsersCount <= 1000) return 25000;
     let progress = (globalUsersCount - 1000) / 999000;
