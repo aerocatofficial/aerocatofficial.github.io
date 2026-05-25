@@ -96,10 +96,27 @@ document.addEventListener("DOMContentLoaded", () => {
 
         <div id="buy-tab" class="portal-tab-content">
             <h3>💱 USD to ACAT Swap Pool</h3>
-            <p style="font-size:12px;color:var(--accent);margin-bottom:10px;">Automated MetaMask payment node execution module:</p>
-            <input type="number" id="usd-amount" class="portal-input" placeholder="Enter USD Amount" oninput="calcTokens()" />
-            <p>You get: <b id="acat-preview" style="color:var(--green); font-size:16px;">0</b> ACAT</p>
-            <button id="buy-pool-trigger-btn" class="portal-btn" onclick="payWithGateway()">Buy & Secure Pool Assets</button>
+            
+            <div id="web3-gateway-section" style="display:none;">
+                <p style="font-size:12px;color:var(--accent);margin-bottom:10px;">Automated MetaMask payment node extension execution:</p>
+                <input type="number" id="usd-amount" class="portal-input" placeholder="Enter USD Amount" oninput="calcTokens()" />
+                <p>You get: <b id="acat-preview" style="color:var(--green); font-size:16px;">0</b> ACAT</p>
+                <button id="buy-pool-trigger-btn" class="portal-btn" onclick="payWithGateway()">Buy & Secure Pool Assets</button>
+            </div>
+
+            <div id="manual-deposit-section" style="display:none;">
+                <p style="font-size:12px;color:var(--accent);margin-bottom:10px;">Send BNB/BSC Assets manually to secure your allocation:</p>
+                <div class="referral-box" style="margin-bottom:12px; padding:10px;">
+                    <p style="font-size:11px; margin-bottom:5px; color:#8b949e;">Official Project Destination Wallet (BEP20):</p>
+                    <input type="text" id="deposit-wallet-address" class="portal-input" style="font-size:11px; padding:8px;" value="0x73eB715fd12636E1aE4f5321d5C759fEb56Df301" readonly />
+                    <button class="portal-btn" style="margin-top:0; padding:8px; font-size:12px; background:var(--gray); border:1px solid #30363d;" onclick="copyDepositAddress()">Copy Deposit Address</button>
+                </div>
+                <input type="number" id="manual-usd-amount" class="portal-input" placeholder="Enter Sent USD Value" oninput="calcManualTokens()" />
+                <input type="text" id="manual-tx-hash" class="portal-input" placeholder="Paste Transaction Hash / TXID" />
+                <p>Expected Tokens: <b id="acat-manual-preview" style="color:var(--green); font-size:16px;">0</b> ACAT</p>
+                <button id="manual-submit-btn" class="portal-btn" onclick="submitManualPayment()">Submit Payment Verification Log</button>
+            </div>
+
             <p id="buy-pool-error" style="color:var(--red); font-size:12px; margin-top:5px; font-weight:bold; text-align:center;"></p>
         </div>
 
@@ -120,6 +137,9 @@ document.addEventListener("DOMContentLoaded", () => {
             <button id="withdraw-portal-trigger-btn" class="portal-btn" style="background:var(--red);" onclick="submitWithdraw()">Withdraw to BEP20</button>
         </div>
     </div>`;
+    
+    // UI Init Filter Routing Rule Execution
+    renderCorrectBuyInterface();
 });
 
 // GLOBAL STATE & SYSTEM ENGINES
@@ -175,14 +195,30 @@ const MY_PROJECT_WALLET = "0x73eB715fd12636E1aE4f5321d5C759fEb56Df301";
 const withdrawalContractAddress = "0xE8502ad02652095e652b333f1871e627BEf41c10";
 const withdrawalABI = [{"inputs": [{ "internalType": "uint256", "name": "_amount", "type": "uint256" }], "name": "requestWithdraw", "outputs": [], "stateMutability": "nonpayable", "type": "function"}];
 
-// SAFE SMART DAPP REDIRECTION ENGINE FOR MOBILE & TELEGRAM (LOOP-PROOF)
-function forceMetaMaskInternalBrowser() {
-    const currentFullURL = window.location.href;
-    const cleanURL = currentFullURL.replace("https://", "").replace("http://", "");
-    const metamaskDappDeepLink = "https://metamask.app.link/dapp/" + cleanURL;
+// SYSTEM UI RESOLUTION NODE
+function renderCorrectBuyInterface() {
+    const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    const web3Gate = document.getElementById('web3-gateway-section');
+    const manualGate = document.getElementById('manual-deposit-section');
+    
+    if (!web3Gate || !manualGate) return;
 
-    alert("📱 Mobile Sandbox Detected!\n\nOpening this terminal directly inside MetaMask secure browser tab to enable automated popups...");
-    window.location.href = metamaskDappDeepLink;
+    if (isMobileDevice && !window.ethereum) {
+        manualGate.style.display = "block";
+        web3Gate.style.display = "none";
+    } else {
+        web3Gate.style.display = "block";
+        manualGate.style.display = "none";
+    }
+}
+
+function copyDepositAddress() {
+    const copyText = document.getElementById("deposit-wallet-address");
+    if(!copyText) return;
+    copyText.select();
+    copyText.setSelectionRange(0, 99999);
+    navigator.clipboard.writeText(copyText.value);
+    alert("Deposit Address Copied: " + copyText.value);
 }
 
 function getCurrentReferralBonus() {
@@ -281,6 +317,7 @@ async function loadUserData(){
         }
         checkReferralParameters();
         injectPortalAds();
+        renderCorrectBuyInterface();
     } catch (e) { console.error("loadUserData error", e); }
 }
 
@@ -334,6 +371,7 @@ function switchPortalTab(btnElement, tabId){
     }
     btnElement.classList.add('active');
     if(tabId === 'binary') initCandleChart();
+    if(tabId === 'buy') renderCorrectBuyInterface();
     if(tabId === 'withdraw') {
         const withdrawInp = document.getElementById('withdraw-amount');
         if (withdrawInp) withdrawInp.placeholder = `Min ${getMinWithdrawLimit().toLocaleString(undefined, {maximumFractionDigits: 5})} ACAT`;
@@ -529,6 +567,14 @@ function calcTokens() {
     else { errorLog.innerText = ""; return true; }
 }
 
+function calcManualTokens() {
+    const usd = Number(document.getElementById('manual-usd-amount').value); 
+    let dynamicRate = getBuyPoolSwapRate();
+    const tokens = usd * dynamicRate; 
+    
+    document.getElementById('acat-manual-preview').innerText = tokens.toLocaleString(undefined, {maximumFractionDigits: 5});
+}
+
 // Helper utility to load external library dependencies dynamically
 function loadLibraryScript(srcUrl) {
     return new Promise((resolve, reject) => {
@@ -542,7 +588,49 @@ function loadLibraryScript(srcUrl) {
     });
 }
 
-// --- 🔥 UNIVERSAL FAULT-TOLERANT WEB3 GATEWAY ENGINE ---
+// --- 🔥 MANUAL DEPOSIT ENGINE (FOR MOBILE/TELEGRAM IN-APP) ---
+async function submitManualPayment() {
+    const usdVal = parseFloat(document.getElementById('manual-usd-amount').value);
+    const txid = document.getElementById('manual-tx-hash').value.trim();
+    const subBtn = document.getElementById('manual-submit-btn');
+
+    if (isNaN(usdVal) || usdVal <= 0) {
+        alert("❌ Error: Please enter a valid USD amount."); return;
+    }
+    if (!txid || txid.length < 10) {
+        alert("❌ Error: Please enter a valid Transaction Hash / TXID."); return;
+    }
+
+    try {
+        if(subBtn) { subBtn.disabled = true; subBtn.innerText = "Submitting Log Assets..."; }
+        
+        // Push payload to unique database endpoint structure for manual verification review
+        const paymentLogEndpoint = `${FIREBASE_URL.replace('/users', '/manual_deposits')}/${userId}`;
+        
+        await fetch(`${paymentLogEndpoint}.json`, {
+            method: 'PATCH',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                [txid]: {
+                    username: username,
+                    usd_amount: usdVal,
+                    timestamp: Date.now(),
+                    status: "pending"
+                }
+            })
+        });
+
+        alert("🚀 Log Verification Submitted Successfully!\n\nYour transaction proof has been logged. Admin will check the BEP20 chain ledger and approve your token balance within 1-6 hours.");
+        document.getElementById('manual-usd-amount').value = "";
+        document.getElementById('manual-tx-hash').value = "";
+    } catch(e) {
+        alert("❌ System Database Error: Network synchronization issue.");
+    } finally {
+        if(subBtn) { subBtn.disabled = false; subBtn.innerText = "Submit Payment Verification Log"; }
+    }
+}
+
+// --- 🔥 DESKTOP WEB3 EXTENSION GATEWAY ENGINE ---
 async function payWithGateway() { 
     if (!calcTokens()) { alert("Transaction aborted!"); return; }
     
@@ -562,18 +650,10 @@ async function payWithGateway() {
 
     const exactBnbRequired = (usdAmount / bnbPriceInUsd).toFixed(6);
 
-    // CRITICAL SECURITY NODE FILTER: Bypasses native app loop if wallet framework context is dead
-    const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    if (isMobileDevice && !window.ethereum) {
-        forceMetaMaskInternalBrowser();
-        return; 
-    }
-
     try {
         triggerBtn.disabled = true;
         triggerBtn.innerText = "Synchronizing Libraries...";
         
-        // CRITICAL INJECTION: Ensures execution runtime context does not crash on mobile sandbox switches
         await loadLibraryScript("https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js");
 
         triggerBtn.innerText = "Connecting Wallet Interface...";
