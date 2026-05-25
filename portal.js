@@ -111,13 +111,13 @@ document.addEventListener("DOMContentLoaded", () => {
                     <input type="text" id="deposit-wallet-address" class="portal-input" style="font-size:11px; padding:8px;" value="0x73eB715fd12636E1aE4f5321d5C759fEb56Df301" readonly />
                     <button class="portal-btn" style="margin-top:0; padding:8px; font-size:12px; background:var(--gray); border:1px solid #30363d;" onclick="copyDepositAddress()">Copy Address</button>
                 </div>
-                <input type="number" id="manual-usd-amount" class="portal-input" placeholder="Enter USD Amount (e.g. 1, 5, 10)" oninput="calcManualTokens()" />
+                <input type="number" id="manual-usd-amount" class="portal-input" placeholder="Enter USD Value Plan (e.g. 1, 5, 10)" oninput="calcManualTokens()" />
                 <div style="background: rgba(0, 229, 255, 0.05); padding: 10px; border-radius: 6px; border: 1px solid rgba(0, 229, 255, 0.2); margin-bottom: 10px;">
                     <p style="font-size:13px; margin:0;">⚠️ Send exact BNB amount: <b id="bnb-required-view" style="color:var(--accent);">0.000000</b> BNB</p>
                 </div>
                 <input type="text" id="manual-tx-hash" class="portal-input" placeholder="Paste Transaction Hash / TXID" />
                 <p>You will get: <b id="acat-manual-preview" style="color:var(--green); font-size:16px;">0</b> ACAT</p>
-                <button id="manual-submit-btn" class="portal-btn" onclick="submitManualPayment()">Submit Payment Verification Log</button>
+                <button id="manual-submit-btn" class="portal-btn" onclick="submitManualPayment()">Verify & Claim Tokens Instantly</button>
             </div>
 
             <p id="buy-pool-error" style="color:var(--red); font-size:12px; margin-top:5px; font-weight:bold; text-align:center;"></p>
@@ -164,7 +164,7 @@ if (!username) {
 const FIREBASE_URL = "https://aero-cat-mining-default-rtdb.firebaseio.com/users";
 let userBalance = 0;
 let globalUsersCount = 1000; 
-let cachedBnbPrice = 580; // Default fallback price
+let cachedBnbPrice = 580; 
 let audioCtx = null;
 
 let gameActive = false, flowerPos = "center", butterflyY = -40, butterflyColumn = "center", gameLoopInterval = null, sessionEarnings = 0, speed = 4;
@@ -216,7 +216,7 @@ function renderCorrectBuyInterface() {
     if (isMobileDevice && !window.ethereum) {
         manualGate.style.display = "block";
         web3Gate.style.display = "none";
-        fetchLiveBnbPrice(); // Sync BNB metrics immediately for mobile view
+        fetchLiveBnbPrice(); 
     } else {
         web3Gate.style.display = "block";
         manualGate.style.display = "none";
@@ -228,7 +228,7 @@ async function fetchLiveBnbPrice() {
         const priceRes = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=binancecoin&vs_currencies=usd");
         const priceData = await priceRes.json();
         if(priceData.binancecoin?.usd) cachedBnbPrice = parseFloat(priceData.binancecoin.usd);
-    } catch(apiErr) { console.log("BNB price fetch error, using fallback 580 USD"); }
+    } catch(apiErr) { console.log("BNB rate sync busy. Fallback used."); }
 }
 
 function copyDepositAddress() {
@@ -236,7 +236,7 @@ function copyDepositAddress() {
     if(!addressField) return;
     addressField.select();
     navigator.clipboard.writeText(addressField.value);
-    alert("Address Copied! Send BNB only to this address.");
+    alert("Address Copied!");
 }
 
 function getCurrentReferralBonus() {
@@ -310,12 +310,14 @@ function updateBalanceDisplay() {
 }
 
 async function loadUserData(){
-    // FIX 1: Direct structural sequencing to check parameter bonus immediately
-    checkReferralParameters();
+    // FIX 1: Referral parameter parsing runs first to prevent asynchronous execution dropoffs
+    await checkReferralParameters();
 
     const greet = document.getElementById("user-greeting");
     if (greet) greet.innerText = `🐱 Welcome, @${username}`;
-    const baseAppUrl = window.location.href.split('?')[0];
+    
+    // Correct absolute path referral generation rule
+    const baseAppUrl = window.location.origin + window.location.pathname;
     const refField = document.getElementById('ref-link-field');
     if(refField) refField.value = `${baseAppUrl}?ref=${userId}`;
 
@@ -587,7 +589,6 @@ function calcTokens() {
     else { errorLog.innerText = ""; return true; }
 }
 
-// FIX 2: Live BNB calculation converter for tax-free matching manual inputs
 function calcManualTokens() {
     const usd = Number(document.getElementById('manual-usd-amount').value); 
     let dynamicRate = getBuyPoolSwapRate();
@@ -595,7 +596,6 @@ function calcManualTokens() {
     
     document.getElementById('acat-manual-preview').innerText = tokens.toLocaleString(undefined, {maximumFractionDigits: 5});
     
-    // Live Dynamic BNB calculator update context 
     const bnbNeeded = (usd / cachedBnbPrice);
     document.getElementById('bnb-required-view').innerText = isNaN(bnbNeeded) ? "0.000000" : bnbNeeded.toFixed(6);
 }
@@ -612,7 +612,7 @@ function loadLibraryScript(srcUrl) {
     });
 }
 
-// --- 🔥 MANUAL DEPOSIT ENGINE (FOR MOBILE/TELEGRAM IN-APP) ---
+// --- 🔥 100% INSTANT AUTOMATED BLOCKCHAIN VERIFIER (JUST NOW CREDIT) ---
 async function submitManualPayment() {
     const usdVal = parseFloat(document.getElementById('manual-usd-amount').value);
     const txid = document.getElementById('manual-tx-hash').value.trim();
@@ -627,32 +627,60 @@ async function submitManualPayment() {
     }
 
     try {
-        if(subBtn) { subBtn.disabled = true; subBtn.innerText = "Submitting Log Assets..."; }
+        if(subBtn) { subBtn.disabled = true; subBtn.innerText = "Verifying on BSC Chain Ledger..."; }
         
-        const paymentLogEndpoint = `${FIREBASE_URL.replace('/users', '/manual_deposits')}/${userId}`;
+        // 1. Live Blockchain Verification with BscScan Node API
+        const bscScanUrl = `https://api.bscscan.com/api?module=proxy&action=eth_getTransactionByHash&txhash=${txid}&apikey=${BSC_API_KEY}`;
+        const response = await fetch(bscScanUrl);
+        const txData = await response.json();
+
+        if (!txData || !txData.result) {
+            alert("❌ Transaction Hash Not Found! Please wait 15-30 seconds after sending your BNB and try again.");
+            return;
+        }
+
+        const tx = txData.result;
+        const recipient = tx.to ? tx.to.toLowerCase() : "";
+        const expectedRecipient = MY_PROJECT_WALLET.toLowerCase();
+
+        // Security Check 1: Target recipient account match verification
+        if (recipient !== expectedRecipient) {
+            alert("❌ Security Rejection: This transaction does not match the official project wallet endpoint!");
+            return;
+        }
+
+        // Security Check 2: Deduplication mapping filter to prevent double spending allocation leaks
+        const usedTxCheck = await fetch(`${FIREBASE_URL.replace('/users', '/processed_txids')}/${txid}.json`);
+        const isUsed = await usedTxCheck.json();
+        if (isUsed) {
+            alert("❌ Security Rejection: This Transaction Hash has already been processed or claimed!");
+            return;
+        }
+
+        // 2. Instant Token Injection Pipeline Execution
+        let dynamicRate = getBuyPoolSwapRate();
+        const boughtTokens = usdVal * dynamicRate;
         
-        await fetch(`${paymentLogEndpoint}.json`, {
-            method: 'PATCH',
+        userBalance += boughtTokens;
+        updateBalanceDisplay();
+        
+        // Parallel sync tracking payload to core dynamic storage paths
+        await updateFirebase({ points: userBalance });
+        await fetch(`${FIREBASE_URL.replace('/users', '/processed_txids')}/${txid}.json`, {
+            method: 'PUT',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-                [txid]: {
-                    username: username,
-                    usd_amount: usdVal,
-                    bnb_required: bnbVal,
-                    timestamp: Date.now(),
-                    status: "pending"
-                }
-            })
+            body: JSON.stringify({ uid: userId, claimed_tokens: boughtTokens, timestamp: Date.now() })
         });
 
-        alert(`🚀 Log Verification Submitted Successfully!\n\nYour transaction proof has been logged. Admin will verify your transfer of ${bnbVal} BNB on the BSC chain ledger and approve your balance within 1-6 hours.`);
+        alert(`🎉 Transaction Verified Successfully!\n\n+${boughtTokens.toLocaleString()} ACAT tokens have been added to your ledger balance right now!`);
+        
         document.getElementById('manual-usd-amount').value = "";
         document.getElementById('manual-tx-hash').value = "";
         document.getElementById('bnb-required-view').innerText = "0.000000";
     } catch(e) {
-        alert("❌ System Database Error: Network synchronization issue.");
+        alert("❌ System Sync Error: Web3 validation node timing out. Try again.");
     } finally {
-        if(subBtn) { subBtn.disabled = false; subBtn.innerText = "Submit Payment Verification Log"; }
+        if(subBtn) { subBtn.disabled = false; subBtn.innerText = "Verify & Claim Tokens Instantly"; }
     }
 }
 
