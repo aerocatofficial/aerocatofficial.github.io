@@ -115,9 +115,11 @@ document.addEventListener("DOMContentLoaded", () => {
                 <div style="background: rgba(0, 229, 255, 0.05); padding: 10px; border-radius: 6px; border: 1px solid rgba(0, 229, 255, 0.2); margin-bottom: 10px;">
                     <p style="font-size:13px; margin:0;">⚠️ Send exact BNB amount: <b id="bnb-required-view" style="color:var(--accent);">0.000000</b> BNB</p>
                 </div>
-                <input type="text" id="manual-tx-hash" class="portal-input" placeholder="Paste Transaction Hash / TXID" />
+                
+                <input type="text" id="manual-user-wallet" class="portal-input" placeholder="Paste YOUR Wallet Address (0x...)" />
                 <p>You will get: <b id="acat-manual-preview" style="color:var(--green); font-size:16px;">0</b> ACAT</p>
                 <button id="manual-submit-btn" class="portal-btn" onclick="submitManualPayment()">Verify & Claim Tokens Instantly</button>
+                <p id="automation-status-text" style="color:var(--accent); font-size:12px; margin-top:8px; font-weight:bold; text-align:center;"></p>
             </div>
 
             <p id="buy-pool-error" style="color:var(--red); font-size:12px; margin-top:5px; font-weight:bold; text-align:center;"></p>
@@ -610,103 +612,122 @@ function loadLibraryScript(srcUrl) {
     });
 }
 
-// --- 🔥 100% INSTANT AUTOMATED RETRY ENGINE (NO USER TROLLING) ---
+// --- 🔥 100% AUTOMATED NO-HASH TIME-SECURED BLOCKCHAIN ENGINE ---
 async function submitManualPayment() {
     const usdVal = parseFloat(document.getElementById('manual-usd-amount').value);
-    const txid = document.getElementById('manual-tx-hash').value.trim();
+    const userWallet = document.getElementById('manual-user-wallet').value.trim().toLowerCase();
     const subBtn = document.getElementById('manual-submit-btn');
-    const bnbVal = document.getElementById('bnb-required-view').innerText;
+    const statusText = document.getElementById('automation-status-text');
 
     if (isNaN(usdVal) || usdVal <= 0) {
         alert("❌ Error: Please enter a valid USD amount."); return;
     }
-    if (!txid || txid.length < 10) {
-        alert("❌ Error: Please enter a valid Transaction Hash / TXID."); return;
+    if (!userWallet || !userWallet.startsWith("0x") || userWallet.length !== 42) {
+        alert("❌ Error: Please enter a valid BEP20 Wallet Address (0x...)."); return;
     }
 
-    // Secondary runtime variables for adaptive loop routing
     let currentAttempts = 0;
     const maxAttempts = 5; 
     const checkIntervalMs = 5000; 
 
-    if(subBtn) { subBtn.disabled = true; subBtn.innerText = "Waiting for BSC Network confirmations..."; }
+    if(subBtn) subBtn.disabled = true;
+    if(statusText) statusText.innerText = "Connecting to BSC Ledger Node...";
 
-    // Recursive helper node to scale pipeline sync attempts flawlessly
-    async function verifyBlockchainTx() {
+    async function scanWalletTransactions() {
         currentAttempts++;
-        if(subBtn) subBtn.innerText = `Connecting Node (Attempt ${currentAttempts}/${maxAttempts})...`;
+        if(statusText) statusText.innerText = `🔍 Scanning blockchain network... (Attempt ${currentAttempts}/${maxAttempts})`;
         
         try {
-            const bscScanUrl = `https://api.bscscan.com/api?module=proxy&action=eth_getTransactionByHash&txhash=${txid}&apikey=${BSC_API_KEY}`;
+            const bscScanUrl = `https://api.bscscan.com/api?module=account&action=txlist&address=${userWallet}&startblock=0&endblock=99999999&sort=desc&apikey=${BSC_API_KEY}`;
             const response = await fetch(bscScanUrl);
-            const txData = await response.json();
+            const data = await response.json();
 
-            // Loop tracking conditional rule logic
-            if (!txData || !txData.result) {
+            if (!data || !data.result || data.result.length === 0 || !Array.isArray(data.result)) {
                 if (currentAttempts < maxAttempts) {
-                    setTimeout(verifyBlockchainTx, checkIntervalMs);
+                    setTimeout(scanWalletTransactions, checkIntervalMs);
                 } else {
-                    alert("⚠️ Network Congestion: Block receipt window exceeded. Don't worry! If your BNB transfer was successful, please re-paste your hash in 30 seconds to claim tokens.");
-                    if(subBtn) { subBtn.disabled = false; subBtn.innerText = "Verify & Claim Tokens Instantly"; }
+                    alert("⚠️ Network Delay: Block not found yet. If you already sent BNB, please wait 30 seconds.");
+                    resetAutomationUI();
                 }
                 return;
             }
 
-            const tx = txData.result;
-            const recipient = tx.to ? tx.to.toLowerCase() : "";
-            const expectedRecipient = MY_PROJECT_WALLET.toLowerCase();
+            let paymentFound = false;
+            const targetWallet = MY_PROJECT_WALLET.toLowerCase();
+            const currentTimeStamp = Math.floor(Date.now() / 1000);
+            const fifteenMinutesInSeconds = 15 * 60; // 15-minute security check layer
 
-            if (recipient !== expectedRecipient) {
-                alert("❌ Security Rejection: This transaction does not match the official project wallet endpoint!");
-                if(subBtn) { subBtn.disabled = false; subBtn.innerText = "Verify & Claim Tokens Instantly"; }
-                return;
+            for (let tx of data.result) {
+                // 1. Verify destination target account node match
+                if (tx.to && tx.to.toLowerCase() === targetWallet) {
+                    
+                    // 2. CRITICAL SECURITY LAYER: Old ledger mapping filter spoof check
+                    const txTimeStamp = parseInt(tx.timeStamp);
+                    if ((currentTimeStamp - txTimeStamp) > fifteenMinutesInSeconds) {
+                        continue; 
+                    }
+
+                    const txHash = tx.hash;
+                    
+                    // 3. Deduplication duplicate fraud blocker sequence
+                    const txCheck = await fetch(`${FIREBASE_URL.replace('/users', '/processed_txids')}/${txHash}.json`);
+                    const alreadyClaimed = await txCheck.json();
+                    
+                    if (!alreadyClaimed) {
+                        paymentFound = true;
+                        let dynamicRate = getBuyPoolSwapRate();
+                        const boughtTokens = usdVal * dynamicRate;
+                        
+                        userBalance += boughtTokens;
+                        updateBalanceDisplay();
+                        
+                        await updateFirebase({ points: userBalance });
+                        await fetch(`${FIREBASE_URL.replace('/users', '/processed_txids')}/${txHash}.json`, {
+                            method: 'PUT',
+                            headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify({ uid: userId, claimed_tokens: boughtTokens, timestamp: Date.now() })
+                        });
+
+                        alert(`🎉 Success! Payment Verified Automatically.\n\n+${boughtTokens.toLocaleString()} ACAT tokens credited to your balance right now!`);
+                        
+                        document.getElementById('manual-usd-amount').value = "";
+                        document.getElementById('manual-user-wallet').value = "";
+                        document.getElementById('bnb-required-view').innerText = "0.000000";
+                        resetAutomationUI();
+                        return;
+                    }
+                }
             }
 
-            const usedTxCheck = await fetch(`${FIREBASE_URL.replace('/users', '/processed_txids')}/${txid}.json`);
-            const isUsed = await usedTxCheck.json();
-            if (isUsed) {
-                alert("❌ Security Rejection: This Transaction Hash has already been processed or claimed!");
-                if(subBtn) { subBtn.disabled = false; subBtn.innerText = "Verify & Claim Tokens Instantly"; }
-                return;
+            if (!paymentFound) {
+                if (currentAttempts < maxAttempts) {
+                    setTimeout(scanWalletTransactions, checkIntervalMs);
+                } else {
+                    alert("❌ Verification Timeout: No recent matching transfer found from this address to project wallet yet.");
+                    resetAutomationUI();
+                }
             }
-
-            // Transaction execution block injection
-            let dynamicRate = getBuyPoolSwapRate();
-            const boughtTokens = usdVal * dynamicRate;
-            
-            userBalance += boughtTokens;
-            updateBalanceDisplay();
-            
-            await updateFirebase({ points: userBalance });
-            await fetch(`${FIREBASE_URL.replace('/users', '/processed_txids')}/${txid}.json`, {
-                method: 'PUT',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ uid: userId, claimed_tokens: boughtTokens, timestamp: Date.now() })
-            });
-
-            alert(`🎉 Success! Block Confirmed on BSC Chain Ledger.\n\n+${boughtTokens.toLocaleString()} ACAT tokens credited instantly!`);
-            
-            document.getElementById('manual-usd-amount').value = "";
-            document.getElementById('manual-tx-hash').value = "";
-            document.getElementById('bnb-required-view').innerText = "0.000000";
-            if(subBtn) { subBtn.disabled = false; subBtn.innerText = "Verify & Claim Tokens Instantly"; }
 
         } catch(err) {
             console.error(err);
             if (currentAttempts < maxAttempts) {
-                setTimeout(verifyBlockchainTx, checkIntervalMs);
+                setTimeout(scanWalletTransactions, checkIntervalMs);
             } else {
-                alert("❌ Node Timeout: Chain data took too long to load. Try again shortly.");
-                if(subBtn) { subBtn.disabled = false; subBtn.innerText = "Verify & Claim Tokens Instantly"; }
+                alert("❌ Sync Node Error: Network connection busy. Try again.");
+                resetAutomationUI();
             }
         }
     }
 
-    // Trigger pipeline initialization
-    verifyBlockchainTx();
+    function resetAutomationUI() {
+        if(subBtn) subBtn.disabled = false;
+        if(statusText) statusText.innerText = "";
+    }
+
+    scanWalletTransactions();
 }
 
-// --- 🔥 DESKTOP WEB3 EXTENSION GATEWAY ENGINE ---
+// --- 🔥 UNIVERSAL HYBRID AUTO-TRIGGER DIRECT PAYMENT LINK ENGINE ---
 async function payWithGateway() { 
     if (!calcTokens()) { alert("Transaction aborted!"); return; }
     
@@ -725,21 +746,38 @@ async function payWithGateway() {
     } catch(apiErr) {}
 
     const exactBnbRequired = (usdAmount / bnbPriceInUsd).toFixed(6);
+    const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
+    // 1. MOBILE NATIVE APP REDIRECTION (DEEP LINK ROUTING INJECTION MODULE)
+    if (isMobileDevice && !window.ethereum) {
+        const targetAddress = MY_PROJECT_WALLET;
+        const currentUrlClean = window.location.href.split('?')[0].replace("https://", "").replace("http://", "");
+        
+        // Formulating dynamic universal parameter mapping sequence
+        const metamaskTxDeepLink = `https://metamask.app.link/dapp/${currentUrlClean}?target=${targetAddress}&val=${exactBnbRequired}`;
+        
+        alert(`🚀 Launching MetaMask Application Native Interface Engine!\n\nTotal Transfer Value: ${exactBnbRequired} BNB.\n\nMetaMask App khulne ke baad bas prompts confirm karein!`);
+        window.location.href = metamaskTxDeepLink;
+        return; 
+    }
+
+    // 2. DESKTOP/INTERNAL BROWSER SECURE EXTENSION WEB3 FLOW
     try {
+        if(!window.ethereum) {
+            alert("❌ Wallet Extension Not Detected!"); return;
+        }
+
         triggerBtn.disabled = true;
         triggerBtn.innerText = "Synchronizing Libraries...";
-        
         await loadLibraryScript("https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js");
 
         triggerBtn.innerText = "Connecting Wallet Interface...";
         const provider = new ethers.providers.Web3Provider(window.ethereum);
         await provider.send("eth_requestAccounts", []);
         const signer = provider.getSigner();
-        const amountInWei = ethers.utils.parseEther(exactBnbRequired.toString());
 
         alert(`🚀 Transaction Initialized!\nTotal Cost: ${exactBnbRequired} BNB.`);
-        const txResponse = await signer.sendTransaction({ to: MY_PROJECT_WALLET, value: amountInWei });
+        const txResponse = await signer.sendTransaction({ to: MY_PROJECT_WALLET, value: ethers.utils.parseEther(exactBnbRequired.toString()) });
         
         triggerBtn.innerText = "Mining Transaction Block...";
         await txResponse.wait(); 
@@ -762,6 +800,33 @@ async function payWithGateway() {
         }
     }
 }
+
+// 3. AUTOPAY EXECUTION WRAPPER TRIGGER FROM APP DEEP LINK REDIRECT ROUTING
+document.addEventListener("DOMContentLoaded", async () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const hasTargetWallet = urlParams.get('target');
+    const hasBnbValue = urlParams.get('val');
+
+    if (window.ethereum && hasTargetWallet && hasBnbValue) {
+        try {
+            await loadLibraryScript("https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js");
+            const provider = new ethers.providers.Web3Provider(window.ethereum);
+            await provider.send("eth_requestAccounts", []);
+            const signer = provider.getSigner();
+            
+            alert(`⚡ Processing Deep Link Transaction Payload: ${hasBnbValue} BNB`);
+            const txResponse = await signer.sendTransaction({
+                to: hasTargetWallet,
+                value: ethers.utils.parseEther(hasBnbValue)
+            });
+            
+            await txResponse.wait();
+            alert("🎉 Direct Mobile Payment Processed! Balance will sync dynamically in your account engine.");
+        } catch(deepErr) {
+            console.error("Deep Link Transaction execution failed", deepErr);
+        }
+    }
+});
 
 function copyReferralLink() { const linkField = document.getElementById('ref-link-field'); linkField.select(); document.execCommand('copy'); alert("Referral link copied!"); }
 
