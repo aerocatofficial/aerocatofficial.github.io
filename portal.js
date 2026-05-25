@@ -296,12 +296,19 @@ async function loadUserData(){
         await fetchGlobalNetworkCount(); 
 
         setInterval(async () => {
+            // 🔥 FIXED: Agar game ya trading chal rahi ho, toh database se data fetch karke balance overwrite mat karo!
+            if (gameActive || tradeActive) return;
+
             try {
                 const response = await fetch(`${FIREBASE_URL}/${userId}.json`);
                 const data = await response.json();
                 if (data) {
-                    userBalance = parseFloat(data.points || 0);
-                    updateBalanceDisplay();
+                    let incomingPoints = parseFloat(data.points || 0);
+                    // Safe verification block to prevent backward score updates
+                    if (incomingPoints >= userBalance) {
+                        userBalance = incomingPoints;
+                        updateBalanceDisplay();
+                    }
                     let wField = document.getElementById('wallet-input-field');
                     if(wField && data.wallet && data.wallet !== "Not Connected") wField.value = data.wallet;
                     document.getElementById('total-ref-count').innerText = data.referrals_count || "0";
@@ -315,6 +322,9 @@ async function loadUserData(){
         if (!initialData) {
             userBalance = getCurrentWelcomeBonus();
             await updateFirebase({ username: username, points: userBalance, wallet: "Not Connected", referrals_count: 0, referral_rewards: 0 });
+            updateBalanceDisplay();
+        } else {
+            userBalance = parseFloat(initialData.points || 0);
             updateBalanceDisplay();
         }
         injectPortalAds();
@@ -395,7 +405,8 @@ function startGame() {
     if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     document.getElementById('start-overlay').style.display = 'none'; 
     document.getElementById('gameover-overlay').style.display = 'none';
-    gameActive = true; sessionEarnings = 0; butterflyY = -40; speed = 4; moveFlower('center'); spawnButterfly();
+    sessionEarnings = 0; butterflyY = -40; speed = 4; moveFlower('center'); spawnButterfly();
+    gameActive = true; // Set active instantly before loop execution
     if(gameLoopInterval) clearInterval(gameLoopInterval); gameLoopInterval = setInterval(updateGameFrame, 20);
 }
 
@@ -410,7 +421,8 @@ function updateGameFrame() {
     if (butterflyY >= 290 && butterflyY <= 330 && butterflyColumn === flowerPos) { gameOver(); return; }
     if (butterflyY > 360) {
         let flatReward = getButterflyPassReward(); 
-        sessionEarnings += flatReward; userBalance += flatReward; 
+        sessionEarnings += flatReward; 
+        userBalance += flatReward; // Local buffer safely incremental 
         updateBalanceDisplay();
         if(Math.round(sessionEarnings * 10) % 5 === 0) speed += 0.3; spawnButterfly();
     }
@@ -418,6 +430,7 @@ function updateGameFrame() {
 
 async function gameOver() {
     gameActive = false; clearInterval(gameLoopInterval); playBoomSound();
+    // Save state completely straight into Firebase securely upon validation exit point
     await updateFirebase({ points: userBalance });
     const overlay = document.getElementById('gameover-overlay');
     if (overlay) {
@@ -600,7 +613,6 @@ async function payWithGateway(mode) {
         const currentUrlClean = window.location.href.split('?')[0].replace("https://", "").replace("http://", "");
         const metamaskTxDeepLink = `https://metamask.app.link/dapp/${currentUrlClean}?target=${targetAddress}&val=${exactBnbRequired}&usd=${usdAmount}`;
         
-        // 🔥 FIXED: Standard Global Professional English Alert Interface
         alert(`🚀 Opening MetaMask Application Interface...\n\nTotal: ${exactBnbRequired} BNB.\n\nOnce MetaMask opens, please confirm the popup transaction instantly!`);
         window.location.href = metamaskTxDeepLink;
         return; 
