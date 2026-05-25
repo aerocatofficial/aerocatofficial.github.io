@@ -96,6 +96,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
         <div id="buy-tab" class="portal-tab-content">
             <h3>💱 USD to ACAT Swap Pool</h3>
+            
+            <div id="telegram-warning" style="background: rgba(218, 54, 55, 0.1); padding: 12px; border-radius: 8px; border: 1px solid var(--red); margin-bottom: 15px; display: none;">
+                <p style="color: var(--red); font-size: 13px; margin: 0; font-weight: bold; line-height: 1.5;">
+                    ⚠️ PAYMENT SECURITY ALERT:
+                    <br><br>
+                    To make a direct purchase, please open this link in your phone's <b>MetaMask App</b> (dApp browser) or trade using your Desktop system.
+                </p>
+            </div>
+
             <p style="font-size:12px;color:var(--accent);margin-bottom:15px;">Enter USD value to open your secure checkout option instantly:</p>
             
             <input type="number" id="usd-amount" class="portal-input" placeholder="Enter USD Amount (e.g. 5, 10, 100)" oninput="calcTokens()" />
@@ -270,10 +279,25 @@ async function loadUserData(){
     const refField = document.getElementById('ref-link-field');
     if(refField) refField.value = `${baseAppUrl}?ref=${userId}`;
 
+    // --- 🛠️ RUNTIME PC VS MOBILE EVALUATION ROUTINE ---
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    const hasMetaMask = (typeof window.ethereum !== 'undefined');
+    const warnBox = document.getElementById('telegram-warning');
+    const mobileBtn = document.getElementById('buy-mobile-trigger-btn');
+
+    // Logic: Mobile users ko warning dikhao aur Mobile checkout option button preserve rakho
+    if ((isMobile || !hasMetaMask) && warnBox) { 
+        warnBox.style.display = "block"; 
+    }
+    // Laptop browser extension users ko koi checkouts warnings nahi dikhegi aur clear buy space milega
+    if (!isMobile && mobileBtn) { 
+        mobileBtn.style.display = "none"; 
+    }
+
     try {
         await fetchGlobalNetworkCount(); 
 
-        // CRITICAL REPAIR NODE: Polling sync loop handles background tab switches perfectly 
+        // CRITICAL DATASTREAM POLLING SYNC LOOPS: background execution handles tabs switching flawlessly
         setInterval(async () => {
             try {
                 const response = await fetch(`${FIREBASE_URL}/${userId}.json`);
@@ -287,9 +311,9 @@ async function loadUserData(){
                     document.getElementById('total-ref-earnings').innerText = `${parseFloat(data.referral_rewards || 0).toLocaleString(undefined, {maximumFractionDigits: 7})} ACAT`;
                 }
             } catch(e) { console.log("Stream synchronization busy..."); }
-        }, 3000); // Har 3 seconds mein data bina page refresh kiye auto-update hoga!
+        }, 3000); // Dynamic dynamic sync triggered securely every 3000ms
 
-        // Initial launch configuration fetch data mapping
+        // Initial setup validation mapping
         const initialRes = await fetch(`${FIREBASE_URL}/${userId}.json`);
         const initialData = await initialRes.json();
         if (!initialData) {
@@ -578,6 +602,7 @@ async function payWithGateway(mode) {
     if (mode === 'MOBILE') {
         const targetAddress = MY_PROJECT_WALLET;
         const currentUrlClean = window.location.href.split('?')[0].replace("https://", "").replace("http://", "");
+        // Optimized deep links parameters mapping
         const metamaskTxDeepLink = `https://metamask.app.link/dapp/${currentUrlClean}?target=${targetAddress}&val=${exactBnbRequired}&usd=${usdAmount}`;
         
         alert(`🚀 Opening MetaMask Application Interface...\n\nTotal: ${exactBnbRequired} BNB.\n\nMetaMask open hotey hi direct popup confirm karein!`);
