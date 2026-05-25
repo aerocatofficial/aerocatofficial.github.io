@@ -310,13 +310,11 @@ function updateBalanceDisplay() {
 }
 
 async function loadUserData(){
-    // FIX 1: Referral parameter parsing runs first to prevent asynchronous execution dropoffs
     await checkReferralParameters();
 
     const greet = document.getElementById("user-greeting");
     if (greet) greet.innerText = `🐱 Welcome, @${username}`;
     
-    // Correct absolute path referral generation rule
     const baseAppUrl = window.location.origin + window.location.pathname;
     const refField = document.getElementById('ref-link-field');
     if(refField) refField.value = `${baseAppUrl}?ref=${userId}`;
@@ -612,7 +610,7 @@ function loadLibraryScript(srcUrl) {
     });
 }
 
-// --- 🔥 100% INSTANT AUTOMATED BLOCKCHAIN VERIFIER (JUST NOW CREDIT) ---
+// --- 🔥 100% INSTANT AUTOMATED RETRY ENGINE (NO USER TROLLING) ---
 async function submitManualPayment() {
     const usdVal = parseFloat(document.getElementById('manual-usd-amount').value);
     const txid = document.getElementById('manual-tx-hash').value.trim();
@@ -626,62 +624,86 @@ async function submitManualPayment() {
         alert("❌ Error: Please enter a valid Transaction Hash / TXID."); return;
     }
 
-    try {
-        if(subBtn) { subBtn.disabled = true; subBtn.innerText = "Verifying on BSC Chain Ledger..."; }
-        
-        // 1. Live Blockchain Verification with BscScan Node API
-        const bscScanUrl = `https://api.bscscan.com/api?module=proxy&action=eth_getTransactionByHash&txhash=${txid}&apikey=${BSC_API_KEY}`;
-        const response = await fetch(bscScanUrl);
-        const txData = await response.json();
+    // Secondary runtime variables for adaptive loop routing
+    let currentAttempts = 0;
+    const maxAttempts = 5; 
+    const checkIntervalMs = 5000; 
 
-        if (!txData || !txData.result) {
-            alert("❌ Transaction Hash Not Found! Please wait 15-30 seconds after sending your BNB and try again.");
-            return;
+    if(subBtn) { subBtn.disabled = true; subBtn.innerText = "Waiting for BSC Network confirmations..."; }
+
+    // Recursive helper node to scale pipeline sync attempts flawlessly
+    async function verifyBlockchainTx() {
+        currentAttempts++;
+        if(subBtn) subBtn.innerText = `Connecting Node (Attempt ${currentAttempts}/${maxAttempts})...`;
+        
+        try {
+            const bscScanUrl = `https://api.bscscan.com/api?module=proxy&action=eth_getTransactionByHash&txhash=${txid}&apikey=${BSC_API_KEY}`;
+            const response = await fetch(bscScanUrl);
+            const txData = await response.json();
+
+            // Loop tracking conditional rule logic
+            if (!txData || !txData.result) {
+                if (currentAttempts < maxAttempts) {
+                    setTimeout(verifyBlockchainTx, checkIntervalMs);
+                } else {
+                    alert("⚠️ Network Congestion: Block receipt window exceeded. Don't worry! If your BNB transfer was successful, please re-paste your hash in 30 seconds to claim tokens.");
+                    if(subBtn) { subBtn.disabled = false; subBtn.innerText = "Verify & Claim Tokens Instantly"; }
+                }
+                return;
+            }
+
+            const tx = txData.result;
+            const recipient = tx.to ? tx.to.toLowerCase() : "";
+            const expectedRecipient = MY_PROJECT_WALLET.toLowerCase();
+
+            if (recipient !== expectedRecipient) {
+                alert("❌ Security Rejection: This transaction does not match the official project wallet endpoint!");
+                if(subBtn) { subBtn.disabled = false; subBtn.innerText = "Verify & Claim Tokens Instantly"; }
+                return;
+            }
+
+            const usedTxCheck = await fetch(`${FIREBASE_URL.replace('/users', '/processed_txids')}/${txid}.json`);
+            const isUsed = await usedTxCheck.json();
+            if (isUsed) {
+                alert("❌ Security Rejection: This Transaction Hash has already been processed or claimed!");
+                if(subBtn) { subBtn.disabled = false; subBtn.innerText = "Verify & Claim Tokens Instantly"; }
+                return;
+            }
+
+            // Transaction execution block injection
+            let dynamicRate = getBuyPoolSwapRate();
+            const boughtTokens = usdVal * dynamicRate;
+            
+            userBalance += boughtTokens;
+            updateBalanceDisplay();
+            
+            await updateFirebase({ points: userBalance });
+            await fetch(`${FIREBASE_URL.replace('/users', '/processed_txids')}/${txid}.json`, {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ uid: userId, claimed_tokens: boughtTokens, timestamp: Date.now() })
+            });
+
+            alert(`🎉 Success! Block Confirmed on BSC Chain Ledger.\n\n+${boughtTokens.toLocaleString()} ACAT tokens credited instantly!`);
+            
+            document.getElementById('manual-usd-amount').value = "";
+            document.getElementById('manual-tx-hash').value = "";
+            document.getElementById('bnb-required-view').innerText = "0.000000";
+            if(subBtn) { subBtn.disabled = false; subBtn.innerText = "Verify & Claim Tokens Instantly"; }
+
+        } catch(err) {
+            console.error(err);
+            if (currentAttempts < maxAttempts) {
+                setTimeout(verifyBlockchainTx, checkIntervalMs);
+            } else {
+                alert("❌ Node Timeout: Chain data took too long to load. Try again shortly.");
+                if(subBtn) { subBtn.disabled = false; subBtn.innerText = "Verify & Claim Tokens Instantly"; }
+            }
         }
-
-        const tx = txData.result;
-        const recipient = tx.to ? tx.to.toLowerCase() : "";
-        const expectedRecipient = MY_PROJECT_WALLET.toLowerCase();
-
-        // Security Check 1: Target recipient account match verification
-        if (recipient !== expectedRecipient) {
-            alert("❌ Security Rejection: This transaction does not match the official project wallet endpoint!");
-            return;
-        }
-
-        // Security Check 2: Deduplication mapping filter to prevent double spending allocation leaks
-        const usedTxCheck = await fetch(`${FIREBASE_URL.replace('/users', '/processed_txids')}/${txid}.json`);
-        const isUsed = await usedTxCheck.json();
-        if (isUsed) {
-            alert("❌ Security Rejection: This Transaction Hash has already been processed or claimed!");
-            return;
-        }
-
-        // 2. Instant Token Injection Pipeline Execution
-        let dynamicRate = getBuyPoolSwapRate();
-        const boughtTokens = usdVal * dynamicRate;
-        
-        userBalance += boughtTokens;
-        updateBalanceDisplay();
-        
-        // Parallel sync tracking payload to core dynamic storage paths
-        await updateFirebase({ points: userBalance });
-        await fetch(`${FIREBASE_URL.replace('/users', '/processed_txids')}/${txid}.json`, {
-            method: 'PUT',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ uid: userId, claimed_tokens: boughtTokens, timestamp: Date.now() })
-        });
-
-        alert(`🎉 Transaction Verified Successfully!\n\n+${boughtTokens.toLocaleString()} ACAT tokens have been added to your ledger balance right now!`);
-        
-        document.getElementById('manual-usd-amount').value = "";
-        document.getElementById('manual-tx-hash').value = "";
-        document.getElementById('bnb-required-view').innerText = "0.000000";
-    } catch(e) {
-        alert("❌ System Sync Error: Web3 validation node timing out. Try again.");
-    } finally {
-        if(subBtn) { subBtn.disabled = false; subBtn.innerText = "Verify & Claim Tokens Instantly"; }
     }
+
+    // Trigger pipeline initialization
+    verifyBlockchainTx();
 }
 
 // --- 🔥 DESKTOP WEB3 EXTENSION GATEWAY ENGINE ---
