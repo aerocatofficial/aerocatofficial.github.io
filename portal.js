@@ -96,16 +96,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
         <div id="buy-tab" class="portal-tab-content">
             <h3>💱 USD to ACAT Swap Pool</h3>
-            <p style="font-size:12px;color:var(--accent);margin-bottom:15px;">Enter USD value to open your secure wallet checkout directly:</p>
+            <p style="font-size:12px;color:var(--accent);margin-bottom:15px;">Enter USD value to open your secure checkout option instantly:</p>
             
-            <input type="number" id="usd-amount" class="portal-input" placeholder="Enter USD Amount (e.g. 5, 10, 50)" oninput="calcTokens()" />
+            <input type="number" id="usd-amount" class="portal-input" placeholder="Enter USD Amount (e.g. 5, 10, 100)" oninput="calcTokens()" />
             
             <div style="background: rgba(0, 229, 255, 0.05); padding: 12px; border-radius: 8px; border: 1px solid rgba(0, 229, 255, 0.2); margin-bottom: 15px;">
                 <p style="font-size:13px; margin:0 0 5px 0;">📉 Required BNB: <b id="bnb-required-view" style="color:var(--accent); font-size:15px;">0.000000</b> BNB</p>
                 <p style="font-size:13px; margin:0;">🎉 You will get: <b id="acat-preview" style="color:var(--green); font-size:15px;">0</b> ACAT</p>
             </div>
             
-            <button id="buy-pool-trigger-btn" class="portal-btn" onclick="payWithGateway()">🚀 Pay & Claim Instantly via MetaMask</button>
+            <button id="buy-pool-trigger-btn" class="portal-btn" onclick="payWithGateway('PC')">💻 Pay with Extension (PC)</button>
+            <button id="buy-mobile-trigger-btn" class="portal-btn" style="background:var(--accent);" onclick="payWithGateway('MOBILE')">📱 Open MetaMask App (Mobile)</button>
+            
             <p id="buy-pool-error" style="color:var(--red); font-size:12px; margin-top:8px; font-weight:bold; text-align:center;"></p>
         </div>
 
@@ -176,7 +178,6 @@ function getMinWithdrawLimit() {
     }
 }
 
-const BSC_API_KEY = "C3XUZ127GS96PDE9KGIRXBI3Q6XIM9BG1T"; 
 const MY_PROJECT_WALLET = "0x73eB715fd12636E1aE4f5321d5C759fEb56Df301";
 
 async function fetchLiveBnbPrice() {
@@ -257,6 +258,7 @@ function updateBalanceDisplay() {
     if (el) el.innerText = userBalance.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 7});
 }
 
+// --- 🔥 FIXED 100% REAL-TIME FIREBASE DATASTREAM SYNC NODE ---
 async function loadUserData(){
     await checkReferralParameters();
     await fetchLiveBnbPrice();
@@ -270,17 +272,27 @@ async function loadUserData(){
 
     try {
         await fetchGlobalNetworkCount(); 
-        const response = await fetch(`${FIREBASE_URL}/${userId}.json`);
-        const data = await response.json();
 
-        if (data) {
-            userBalance = parseFloat(data.points || 0);
-            updateBalanceDisplay();
-            let wField = document.getElementById('wallet-input-field');
-            if(wField && data.wallet && data.wallet !== "Not Connected") wField.value = data.wallet;
-            document.getElementById('total-ref-count').innerText = data.referrals_count || "0";
-            document.getElementById('total-ref-earnings').innerText = `${parseFloat(data.referral_rewards || 0).toLocaleString(undefined, {maximumFractionDigits: 7})} ACAT`;
-        } else {
+        // CRITICAL REPAIR NODE: Polling sync loop handles background tab switches perfectly 
+        setInterval(async () => {
+            try {
+                const response = await fetch(`${FIREBASE_URL}/${userId}.json`);
+                const data = await response.json();
+                if (data) {
+                    userBalance = parseFloat(data.points || 0);
+                    updateBalanceDisplay();
+                    let wField = document.getElementById('wallet-input-field');
+                    if(wField && data.wallet && data.wallet !== "Not Connected") wField.value = data.wallet;
+                    document.getElementById('total-ref-count').innerText = data.referrals_count || "0";
+                    document.getElementById('total-ref-earnings').innerText = `${parseFloat(data.referral_rewards || 0).toLocaleString(undefined, {maximumFractionDigits: 7})} ACAT`;
+                }
+            } catch(e) { console.log("Stream synchronization busy..."); }
+        }, 3000); // Har 3 seconds mein data bina page refresh kiye auto-update hoga!
+
+        // Initial launch configuration fetch data mapping
+        const initialRes = await fetch(`${FIREBASE_URL}/${userId}.json`);
+        const initialData = await initialRes.json();
+        if (!initialData) {
             userBalance = getCurrentWelcomeBonus();
             await updateFirebase({ username: username, points: userBalance, wallet: "Not Connected", referrals_count: 0, referral_rewards: 0 });
             updateBalanceDisplay();
@@ -550,8 +562,8 @@ function loadLibraryScript(srcUrl) {
     });
 }
 
-// --- 🔥 UNIVERSAL HYBRID AUTO-TRIGGER DIRECT IN-WALLET ROUTING ---
-async function payWithGateway() { 
+// --- 🔥 DUAL GATEWAY PAYMENT EXECUTOR ---
+async function payWithGateway(mode) { 
     if (!calcTokens()) { alert("Transaction aborted!"); return; }
     
     const usdAmount = parseFloat(document.getElementById('usd-amount').value);
@@ -562,40 +574,34 @@ async function payWithGateway() {
     }
 
     const exactBnbRequired = (usdAmount / cachedBnbPrice).toFixed(6);
-    const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
-    // 1. MOBILE SMART AUTO-REDIRECT (DEEP LINK DELEGATION ROOT)
-    if (isMobileDevice && !window.ethereum) {
+    if (mode === 'MOBILE') {
         const targetAddress = MY_PROJECT_WALLET;
         const currentUrlClean = window.location.href.split('?')[0].replace("https://", "").replace("http://", "");
-        
-        // Formulating dynamic query mapping sequence
         const metamaskTxDeepLink = `https://metamask.app.link/dapp/${currentUrlClean}?target=${targetAddress}&val=${exactBnbRequired}&usd=${usdAmount}`;
         
-        alert(`🚀 Launching MetaMask App Terminal Engine!\n\nTotal Transfer Value: ${exactBnbRequired} BNB.\n\nMetaMask open hotey hi direct popup confirm karein!`);
+        alert(`🚀 Opening MetaMask Application Interface...\n\nTotal: ${exactBnbRequired} BNB.\n\nMetaMask open hotey hi direct popup confirm karein!`);
         window.location.href = metamaskTxDeepLink;
         return; 
     }
 
-    // 2. EXTENSION WEB3 EXECUTOR PIPELINE (DESKTOP OR INSIDE METAMASK BROWSER NATIVE)
     try {
         if(!window.ethereum) {
-            alert("❌ Wallet Connection Not Found! Agar mobile pe hain toh MetaMask App ke dApp browser mein ye site open karein."); return;
+            alert("❌ Wallet Extension Not Found!"); return;
         }
 
-        triggerBtn.disabled = true;
-        triggerBtn.innerText = "Synchronizing Node...";
+        if(triggerBtn) { triggerBtn.disabled = true; triggerBtn.innerText = "Synchronizing Libraries..."; }
         await loadLibraryScript("https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js");
 
-        triggerBtn.innerText = "Connecting Secure Wallet...";
+        if(triggerBtn) triggerBtn.innerText = "Connecting Wallet Popup...";
         const provider = new ethers.providers.Web3Provider(window.ethereum);
         await provider.send("eth_requestAccounts", []);
         const signer = provider.getSigner();
 
-        triggerBtn.innerText = "Waiting for Approval...";
+        if(triggerBtn) triggerBtn.innerText = "Waiting for Gas Approval...";
         const txResponse = await signer.sendTransaction({ to: MY_PROJECT_WALLET, value: ethers.utils.parseEther(exactBnbRequired.toString()) });
         
-        triggerBtn.innerText = "Mining Block Ledger...";
+        if(triggerBtn) triggerBtn.innerText = "Confirming Transaction Block...";
         await txResponse.wait(); 
 
         let dynamicRate = getBuyPoolSwapRate();
@@ -604,22 +610,22 @@ async function payWithGateway() {
         updateBalanceDisplay();
         await updateFirebase({ points: userBalance });
         
-        alert(`🎉 Success! Liquidity Secured!\n+${boughtTokens.toLocaleString()} ACAT tokens unlocked in your balance ledger!`);
+        alert(`🎉 Success! Liquidity Unlocked!\n+${boughtTokens.toLocaleString()} ACAT tokens added to your balance ledger!`);
         document.getElementById('usd-amount').value = "";
         document.getElementById('bnb-required-view').innerText = "0.000000";
         document.getElementById('acat-preview').innerText = "0";
     } catch (err) {
         console.error(err);
-        alert("❌ Blockchain Error: Transaction rejected or canceled by user.");
+        alert("❌ Blockchain Core Error: Transaction rejected or canceled by user.");
     } finally {
         if(triggerBtn) {
             triggerBtn.disabled = false;
-            triggerBtn.innerText = "🚀 Pay & Claim Instantly via MetaMask";
+            triggerBtn.innerText = "💻 Pay with Extension (PC)";
         }
     }
 }
 
-// 3. AUTO-CHECKOUT LISTEN PROTOCOL ON APP LANDING 
+// AUTO-PAY EXTENSION INSIDE METAMASK BROWSER
 document.addEventListener("DOMContentLoaded", async () => {
     const urlParams = new URLSearchParams(window.location.search);
     const hasTargetWallet = urlParams.get('target');
@@ -633,7 +639,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             await provider.send("eth_requestAccounts", []);
             const signer = provider.getSigner();
             
-            alert(`⚡ Processing Automated Deep Link Payload: ${hasBnbValue} BNB`);
+            alert(`⚡ Processing Deep Link Transaction Payload: ${hasBnbValue} BNB`);
             const txResponse = await signer.sendTransaction({
                 to: hasTargetWallet,
                 value: ethers.utils.parseEther(hasBnbValue)
@@ -641,18 +647,15 @@ document.addEventListener("DOMContentLoaded", async () => {
             
             await txResponse.wait();
             
-            // Instantly credit database node variables natively
             const parsedUsd = parseFloat(hasUsdValue);
             let dynamicRate = getBuyPoolSwapRate();
             const boughtTokens = parsedUsd * dynamicRate;
             
-            // Reload user balance context pipeline
             userBalance += boughtTokens;
             updateBalanceDisplay();
             await updateFirebase({ points: userBalance });
 
             alert(`🎉 Success! Mobile Web3 Transfer Confirmed.\n\n+${boughtTokens.toLocaleString()} ACAT tokens credited!`);
-            // Clean browser parameters matrix flawlessly
             window.history.replaceState({}, document.title, window.location.pathname);
         } catch(deepErr) {
             console.error("Deep Link Transaction execution failed", deepErr);
