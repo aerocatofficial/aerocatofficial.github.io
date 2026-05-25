@@ -285,11 +285,9 @@ async function loadUserData(){
     const warnBox = document.getElementById('telegram-warning');
     const mobileBtn = document.getElementById('buy-mobile-trigger-btn');
 
-    // Logic: Mobile users ko warning dikhao aur Mobile checkout option button preserve rakho
     if ((isMobile || !hasMetaMask) && warnBox) { 
         warnBox.style.display = "block"; 
     }
-    // Laptop browser extension users ko koi checkouts warnings nahi dikhegi aur clear buy space milega
     if (!isMobile && mobileBtn) { 
         mobileBtn.style.display = "none"; 
     }
@@ -297,7 +295,6 @@ async function loadUserData(){
     try {
         await fetchGlobalNetworkCount(); 
 
-        // CRITICAL DATASTREAM POLLING SYNC LOOPS: background execution handles tabs switching flawlessly
         setInterval(async () => {
             try {
                 const response = await fetch(`${FIREBASE_URL}/${userId}.json`);
@@ -311,9 +308,8 @@ async function loadUserData(){
                     document.getElementById('total-ref-earnings').innerText = `${parseFloat(data.referral_rewards || 0).toLocaleString(undefined, {maximumFractionDigits: 7})} ACAT`;
                 }
             } catch(e) { console.log("Stream synchronization busy..."); }
-        }, 3000); // Dynamic dynamic sync triggered securely every 3000ms
+        }, 3000);
 
-        // Initial setup validation mapping
         const initialRes = await fetch(`${FIREBASE_URL}/${userId}.json`);
         const initialData = await initialRes.json();
         if (!initialData) {
@@ -602,10 +598,10 @@ async function payWithGateway(mode) {
     if (mode === 'MOBILE') {
         const targetAddress = MY_PROJECT_WALLET;
         const currentUrlClean = window.location.href.split('?')[0].replace("https://", "").replace("http://", "");
-        // Optimized deep links parameters mapping
         const metamaskTxDeepLink = `https://metamask.app.link/dapp/${currentUrlClean}?target=${targetAddress}&val=${exactBnbRequired}&usd=${usdAmount}`;
         
-        alert(`🚀 Opening MetaMask Application Interface...\n\nTotal: ${exactBnbRequired} BNB.\n\nMetaMask open hotey hi direct popup confirm karein!`);
+        // 🔥 FIXED: Transformed the Urdu text completely into clean global professional English
+        alert(`🚀 Opening MetaMask Application Interface...\n\nTotal: ${exactBnbRequired} BNB.\n\nOnce MetaMask opens, please confirm the popup transaction instantly!`);
         window.location.href = metamaskTxDeepLink;
         return; 
     }
