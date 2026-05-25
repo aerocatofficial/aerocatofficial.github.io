@@ -96,38 +96,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
         <div id="buy-tab" class="portal-tab-content">
             <h3>💱 USD to ACAT Swap Pool</h3>
+            <p style="font-size:12px;color:var(--accent);margin-bottom:15px;">Enter USD value to open your secure wallet checkout directly:</p>
             
-            <div id="web3-gateway-section" style="display:none;">
-                <p style="font-size:12px;color:var(--accent);margin-bottom:10px;">Automated MetaMask payment node extension execution:</p>
-                <input type="number" id="usd-amount" class="portal-input" placeholder="Enter USD Amount" oninput="calcTokens()" />
-                <p>You get: <b id="acat-preview" style="color:var(--green); font-size:16px;">0</b> ACAT</p>
-                <button id="buy-pool-trigger-btn" class="portal-btn" onclick="payWithGateway()">Buy & Secure Pool Assets</button>
+            <input type="number" id="usd-amount" class="portal-input" placeholder="Enter USD Amount (e.g. 5, 10, 50)" oninput="calcTokens()" />
+            
+            <div style="background: rgba(0, 229, 255, 0.05); padding: 12px; border-radius: 8px; border: 1px solid rgba(0, 229, 255, 0.2); margin-bottom: 15px;">
+                <p style="font-size:13px; margin:0 0 5px 0;">📉 Required BNB: <b id="bnb-required-view" style="color:var(--accent); font-size:15px;">0.000000</b> BNB</p>
+                <p style="font-size:13px; margin:0;">🎉 You will get: <b id="acat-preview" style="color:var(--green); font-size:15px;">0</b> ACAT</p>
             </div>
-
-            <div id="manual-deposit-section" style="display:none;">
-                <p style="font-size:12px;color:var(--accent);margin-bottom:10px;">Send BNB (BSC network) manually to secure your allocation:</p>
-                <div class="referral-box" style="margin-bottom:12px; padding:10px;">
-                    <p style="font-size:11px; margin-bottom:5px; color:#8b949e;">Official Project Wallet Address (BEP20):</p>
-                    <input type="text" id="deposit-wallet-address" class="portal-input" style="font-size:11px; padding:8px;" value="0x73eB715fd12636E1aE4f5321d5C759fEb56Df301" readonly />
-                    <button class="portal-btn" style="margin-top:0; padding:8px; font-size:12px; background:var(--gray); border:1px solid #30363d;" onclick="copyDepositAddress()">Copy Address</button>
-                </div>
-                
-                <p style="font-size:12px; margin-bottom:5px; color:#8b949e;"><b>1. Kitne USD Ka Buy Karna Hai?</b></p>
-                <input type="number" id="manual-usd-amount" class="portal-input" placeholder="Enter USD Value Plan (e.g. 1, 5, 10)" oninput="calcManualTokens()" />
-                
-                <div style="background: rgba(0, 229, 255, 0.05); padding: 10px; border-radius: 6px; border: 1px solid rgba(0, 229, 255, 0.2); margin-bottom: 15px;">
-                    <p style="font-size:13px; margin:0;">⚠️ Send exact BNB amount: <b id="bnb-required-view" style="color:var(--accent);">0.000000</b> BNB</p>
-                </div>
-                
-                <p style="font-size:12px; margin-bottom:5px; color:#8b949e;"><b>2. Apna Wallet Address Dalein (0x...):</b></p>
-                <input type="text" id="manual-user-wallet" class="portal-input" placeholder="Paste YOUR Own Trust Wallet / MetaMask Address" />
-                
-                <p>You will get: <b id="acat-manual-preview" style="color:var(--green); font-size:16px;">0</b> ACAT</p>
-                <button id="manual-submit-btn" class="portal-btn" onclick="submitManualPayment()">Verify Wallet Balance Instantly</button>
-                <p id="automation-status-text" style="color:var(--accent); font-size:13px; margin-top:10px; font-weight:bold; text-align:center; min-height: 20px;"></p>
-            </div>
-
-            <p id="buy-pool-error" style="color:var(--red); font-size:12px; margin-top:5px; font-weight:bold; text-align:center;"></p>
+            
+            <button id="buy-pool-trigger-btn" class="portal-btn" onclick="payWithGateway()">🚀 Pay & Claim Instantly via MetaMask</button>
+            <p id="buy-pool-error" style="color:var(--red); font-size:12px; margin-top:8px; font-weight:bold; text-align:center;"></p>
         </div>
 
         <div id="refer-tab" class="portal-tab-content">
@@ -147,8 +126,6 @@ document.addEventListener("DOMContentLoaded", () => {
             <button id="withdraw-portal-trigger-btn" class="portal-btn" style="background:var(--red);" onclick="submitWithdraw()">Withdraw to BEP20</button>
         </div>
     </div>`;
-    
-    renderCorrectBuyInterface();
 });
 
 // GLOBAL STATE & SYSTEM ENGINES
@@ -201,34 +178,6 @@ function getMinWithdrawLimit() {
 
 const BSC_API_KEY = "C3XUZ127GS96PDE9KGIRXBI3Q6XIM9BG1T"; 
 const MY_PROJECT_WALLET = "0x73eB715fd12636E1aE4f5321d5C759fEb56Df301";
-const withdrawalContractAddress = "0xE8502ad02652095e652b333f1871e627BEf41c10";
-const withdrawalABI = [{"inputs": [{ "internalType": "uint256", "name": "_amount", "type": "uint256" }], "name": "requestWithdraw", "outputs": [], "stateMutability": "nonpayable", "type": "function"}];
-
-function forceMetaMaskInternalBrowser() {
-    const currentFullURL = window.location.href;
-    const cleanURL = currentFullURL.replace("https://", "").replace("http://", "");
-    const metamaskDappDeepLink = "https://metamask.app.link/dapp/" + cleanURL;
-
-    alert("📱 Mobile Sandbox Detected!\n\nOpening this terminal directly inside MetaMask secure browser tab to enable automated popups...");
-    window.location.href = metamaskDappDeepLink;
-}
-
-function renderCorrectBuyInterface() {
-    const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    const web3Gate = document.getElementById('web3-gateway-section');
-    const manualGate = document.getElementById('manual-deposit-section');
-    
-    if (!web3Gate || !manualGate) return;
-
-    if (isMobileDevice && !window.ethereum) {
-        manualGate.style.display = "block";
-        web3Gate.style.display = "none";
-        fetchLiveBnbPrice(); 
-    } else {
-        web3Gate.style.display = "block";
-        manualGate.style.display = "none";
-    }
-}
 
 async function fetchLiveBnbPrice() {
     try {
@@ -236,14 +185,6 @@ async function fetchLiveBnbPrice() {
         const priceData = await priceRes.json();
         if(priceData.binancecoin?.usd) cachedBnbPrice = parseFloat(priceData.binancecoin.usd);
     } catch(apiErr) { console.log("BNB rate sync busy. Fallback used."); }
-}
-
-function copyDepositAddress() {
-    const addressField = document.getElementById("deposit-wallet-address");
-    if(!addressField) return;
-    addressField.select();
-    navigator.clipboard.writeText(addressField.value);
-    alert("Address Copied!");
 }
 
 function getCurrentReferralBonus() {
@@ -318,6 +259,7 @@ function updateBalanceDisplay() {
 
 async function loadUserData(){
     await checkReferralParameters();
+    await fetchLiveBnbPrice();
 
     const greet = document.getElementById("user-greeting");
     if (greet) greet.innerText = `🐱 Welcome, @${username}`;
@@ -344,7 +286,6 @@ async function loadUserData(){
             updateBalanceDisplay();
         }
         injectPortalAds();
-        renderCorrectBuyInterface();
     } catch (e) { console.error("loadUserData error", e); }
 }
 
@@ -398,7 +339,6 @@ function switchPortalTab(btnElement, tabId){
     }
     btnElement.classList.add('active');
     if(tabId === 'binary') initCandleChart();
-    if(tabId === 'buy') renderCorrectBuyInterface();
     if(tabId === 'withdraw') {
         const withdrawInp = document.getElementById('withdraw-amount');
         if (withdrawInp) withdrawInp.placeholder = `Min ${getMinWithdrawLimit().toLocaleString(undefined, {maximumFractionDigits: 5})} ACAT`;
@@ -587,22 +527,15 @@ function calcTokens() {
     let dynamicRate = getBuyPoolSwapRate();
     const tokens = usd * dynamicRate; 
     
-    document.getElementById('acat-preview').innerText = tokens.toLocaleString(undefined, {maximumFractionDigits: 5});
+    document.getElementById('acat-preview').innerText = tokens.toLocaleString(undefined, {maximumFractionDigits: 0});
+    
+    const bnbNeeded = (usd / cachedBnbPrice);
+    document.getElementById('bnb-required-view').innerText = isNaN(bnbNeeded) ? "0.000000" : bnbNeeded.toFixed(6);
+
     const errorLog = document.getElementById('buy-pool-error'); 
     const effectiveCap = 5000000; 
     if (tokens > effectiveCap) { errorLog.innerText = "❌ Error: Purchase amount exceeds pool limit!"; return false; }
     else { errorLog.innerText = ""; return true; }
-}
-
-function calcManualTokens() {
-    const usd = Number(document.getElementById('manual-usd-amount').value); 
-    let dynamicRate = getBuyPoolSwapRate();
-    const tokens = usd * dynamicRate; 
-    
-    document.getElementById('acat-manual-preview').innerText = tokens.toLocaleString(undefined, {maximumFractionDigits: 5});
-    
-    const bnbNeeded = (usd / cachedBnbPrice);
-    document.getElementById('bnb-required-view').innerText = isNaN(bnbNeeded) ? "0.000000" : bnbNeeded.toFixed(6);
 }
 
 function loadLibraryScript(srcUrl) {
@@ -617,119 +550,7 @@ function loadLibraryScript(srcUrl) {
     });
 }
 
-// --- 🔥 NO-HASH TIME-SECURED BLOCKCHAIN ENGINE ---
-async function submitManualPayment() {
-    const usdVal = parseFloat(document.getElementById('manual-usd-amount').value);
-    const userWallet = document.getElementById('manual-user-wallet').value.trim().toLowerCase();
-    const subBtn = document.getElementById('manual-submit-btn');
-    const statusText = document.getElementById('automation-status-text');
-
-    if (isNaN(usdVal) || usdVal <= 0) {
-        alert("❌ Error: Please enter a valid USD amount."); return;
-    }
-    if (!userWallet || !userWallet.startsWith("0x") || userWallet.length !== 42) {
-        alert("❌ Error: Please enter a valid BEP20 Wallet Address (0x...)."); return;
-    }
-
-    let currentAttempts = 0;
-    const maxAttempts = 5; 
-    const checkIntervalMs = 5000; 
-
-    if(subBtn) subBtn.disabled = true;
-    if(statusText) statusText.style.display = "block";
-
-    async function scanWalletTransactions() {
-        currentAttempts++;
-        if(statusText) statusText.innerText = `🔍 Scanning blockchain... (Attempt ${currentAttempts}/${maxAttempts})`;
-        
-        try {
-            const bscScanUrl = `https://api.bscscan.com/api?module=account&action=txlist&address=${userWallet}&startblock=0&endblock=99999999&sort=desc&apikey=${BSC_API_KEY}`;
-            const response = await fetch(bscScanUrl);
-            const data = await response.json();
-
-            if (!data || !data.result || data.result.length === 0 || !Array.isArray(data.result)) {
-                if (currentAttempts < maxAttempts) {
-                    setTimeout(scanWalletTransactions, checkIntervalMs);
-                } else {
-                    alert("⚠️ Network Delay: Block not found yet. If you already sent BNB, please wait 30 seconds.");
-                    resetAutomationUI();
-                }
-                return;
-            }
-
-            let paymentFound = false;
-            const targetWallet = MY_PROJECT_WALLET.toLowerCase();
-            const currentTimeStamp = Math.floor(Date.now() / 1000);
-            const fifteenMinutesInSeconds = 15 * 60; 
-
-            for (let tx of data.result) {
-                if (tx.to && tx.to.toLowerCase() === targetWallet) {
-                    
-                    const txTimeStamp = parseInt(tx.timeStamp);
-                    if ((currentTimeStamp - txTimeStamp) > fifteenMinutesInSeconds) {
-                        continue; 
-                    }
-
-                    const txHash = tx.hash;
-                    
-                    const txCheck = await fetch(`${FIREBASE_URL.replace('/users', '/processed_txids')}/${txHash}.json`);
-                    const alreadyClaimed = await txCheck.json();
-                    
-                    if (!alreadyClaimed) {
-                        paymentFound = true;
-                        let dynamicRate = getBuyPoolSwapRate();
-                        const boughtTokens = usdVal * dynamicRate;
-                        
-                        userBalance += boughtTokens;
-                        updateBalanceDisplay();
-                        
-                        await updateFirebase({ points: userBalance });
-                        await fetch(`${FIREBASE_URL.replace('/users', '/processed_txids')}/${txHash}.json`, {
-                            method: 'PUT',
-                            headers: {'Content-Type': 'application/json'},
-                            body: JSON.stringify({ uid: userId, claimed_tokens: boughtTokens, timestamp: Date.now() })
-                        });
-
-                        alert(`🎉 Success! Payment Verified Automatically.\n\n+${boughtTokens.toLocaleString()} ACAT tokens credited to your balance right now!`);
-                        
-                        document.getElementById('manual-usd-amount').value = "";
-                        document.getElementById('manual-user-wallet').value = "";
-                        document.getElementById('bnb-required-view').innerText = "0.000000";
-                        resetAutomationUI();
-                        return;
-                    }
-                }
-            }
-
-            if (!paymentFound) {
-                if (currentAttempts < maxAttempts) {
-                    setTimeout(scanWalletTransactions, checkIntervalMs);
-                } else {
-                    alert("❌ Verification Timeout: Is wallet se koi naya transfer nahi mila. Dubara check karein.");
-                    resetAutomationUI();
-                }
-            }
-
-        } catch(err) {
-            console.error(err);
-            if (currentAttempts < maxAttempts) {
-                setTimeout(scanWalletTransactions, checkIntervalMs);
-            } else {
-                alert("❌ Sync Node Error: Network connection busy. Try again.");
-                resetAutomationUI();
-            }
-        }
-    }
-
-    function resetAutomationUI() {
-        if(subBtn) subBtn.disabled = false;
-        if(statusText) statusText.innerText = "";
-    }
-
-    scanWalletTransactions();
-}
-
-// --- 🔥 UNIVERSAL HYBRID AUTO-TRIGGER DIRECT PAYMENT LINK ENGINE ---
+// --- 🔥 UNIVERSAL HYBRID AUTO-TRIGGER DIRECT IN-WALLET ROUTING ---
 async function payWithGateway() { 
     if (!calcTokens()) { alert("Transaction aborted!"); return; }
     
@@ -740,45 +561,41 @@ async function payWithGateway() {
         alert("❌ Error: Invalid USD deposit value!"); return;
     }
 
-    let bnbPriceInUsd = 580; 
-    try {
-        const priceRes = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=binancecoin&vs_currencies=usd");
-        const priceData = await priceRes.json();
-        if(priceData.binancecoin?.usd) bnbPriceInUsd = parseFloat(priceData.binancecoin.usd);
-    } catch(apiErr) {}
-
-    const exactBnbRequired = (usdAmount / bnbPriceInUsd).toFixed(6);
+    const exactBnbRequired = (usdAmount / cachedBnbPrice).toFixed(6);
     const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
+    // 1. MOBILE SMART AUTO-REDIRECT (DEEP LINK DELEGATION ROOT)
     if (isMobileDevice && !window.ethereum) {
         const targetAddress = MY_PROJECT_WALLET;
         const currentUrlClean = window.location.href.split('?')[0].replace("https://", "").replace("http://", "");
         
-        const metamaskTxDeepLink = `https://metamask.app.link/dapp/${currentUrlClean}?target=${targetAddress}&val=${exactBnbRequired}`;
+        // Formulating dynamic query mapping sequence
+        const metamaskTxDeepLink = `https://metamask.app.link/dapp/${currentUrlClean}?target=${targetAddress}&val=${exactBnbRequired}&usd=${usdAmount}`;
         
-        alert(`🚀 Launching MetaMask Application Native Interface Engine!\n\nTotal Transfer Value: ${exactBnbRequired} BNB.\n\nMetaMask App khulne ke baad bas prompts confirm karein!`);
+        alert(`🚀 Launching MetaMask App Terminal Engine!\n\nTotal Transfer Value: ${exactBnbRequired} BNB.\n\nMetaMask open hotey hi direct popup confirm karein!`);
         window.location.href = metamaskTxDeepLink;
         return; 
     }
 
+    // 2. EXTENSION WEB3 EXECUTOR PIPELINE (DESKTOP OR INSIDE METAMASK BROWSER NATIVE)
     try {
         if(!window.ethereum) {
-            alert("❌ Wallet Extension Not Detected!"); return;
+            alert("❌ Wallet Connection Not Found! Agar mobile pe hain toh MetaMask App ke dApp browser mein ye site open karein."); return;
         }
 
         triggerBtn.disabled = true;
-        triggerBtn.innerText = "Synchronizing Libraries...";
+        triggerBtn.innerText = "Synchronizing Node...";
         await loadLibraryScript("https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js");
 
-        triggerBtn.innerText = "Connecting Wallet Interface...";
+        triggerBtn.innerText = "Connecting Secure Wallet...";
         const provider = new ethers.providers.Web3Provider(window.ethereum);
         await provider.send("eth_requestAccounts", []);
         const signer = provider.getSigner();
 
-        alert(`🚀 Transaction Initialized!\nTotal Cost: ${exactBnbRequired} BNB.`);
+        triggerBtn.innerText = "Waiting for Approval...";
         const txResponse = await signer.sendTransaction({ to: MY_PROJECT_WALLET, value: ethers.utils.parseEther(exactBnbRequired.toString()) });
         
-        triggerBtn.innerText = "Mining Transaction Block...";
+        triggerBtn.innerText = "Mining Block Ledger...";
         await txResponse.wait(); 
 
         let dynamicRate = getBuyPoolSwapRate();
@@ -787,40 +604,56 @@ async function payWithGateway() {
         updateBalanceDisplay();
         await updateFirebase({ points: userBalance });
         
-        alert(`🎉 Liquidity Secured!\n+${boughtTokens.toLocaleString()} ACAT unlocked in your database balance!`);
+        alert(`🎉 Success! Liquidity Secured!\n+${boughtTokens.toLocaleString()} ACAT tokens unlocked in your balance ledger!`);
         document.getElementById('usd-amount').value = "";
+        document.getElementById('bnb-required-view').innerText = "0.000000";
+        document.getElementById('acat-preview').innerText = "0";
     } catch (err) {
         console.error(err);
-        alert("❌ Blockchain Core Error: Transaction dropped or canceled by user.");
+        alert("❌ Blockchain Error: Transaction rejected or canceled by user.");
     } finally {
         if(triggerBtn) {
             triggerBtn.disabled = false;
-            triggerBtn.innerText = "Buy & Secure Pool Assets";
+            triggerBtn.innerText = "🚀 Pay & Claim Instantly via MetaMask";
         }
     }
 }
 
-// AUTOPAY EXECUTION WRAPPER TRIGGER FROM APP DEEP LINK REDIRECT ROUTING
+// 3. AUTO-CHECKOUT LISTEN PROTOCOL ON APP LANDING 
 document.addEventListener("DOMContentLoaded", async () => {
     const urlParams = new URLSearchParams(window.location.search);
     const hasTargetWallet = urlParams.get('target');
     const hasBnbValue = urlParams.get('val');
+    const hasUsdValue = urlParams.get('usd');
 
-    if (window.ethereum && hasTargetWallet && hasBnbValue) {
+    if (window.ethereum && hasTargetWallet && hasBnbValue && hasUsdValue) {
         try {
             await loadLibraryScript("https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js");
             const provider = new ethers.providers.Web3Provider(window.ethereum);
             await provider.send("eth_requestAccounts", []);
             const signer = provider.getSigner();
             
-            alert(`⚡ Processing Deep Link Transaction Payload: ${hasBnbValue} BNB`);
+            alert(`⚡ Processing Automated Deep Link Payload: ${hasBnbValue} BNB`);
             const txResponse = await signer.sendTransaction({
                 to: hasTargetWallet,
                 value: ethers.utils.parseEther(hasBnbValue)
             });
             
             await txResponse.wait();
-            alert("🎉 Direct Mobile Payment Processed! Balance will sync dynamically in your account engine.");
+            
+            // Instantly credit database node variables natively
+            const parsedUsd = parseFloat(hasUsdValue);
+            let dynamicRate = getBuyPoolSwapRate();
+            const boughtTokens = parsedUsd * dynamicRate;
+            
+            // Reload user balance context pipeline
+            userBalance += boughtTokens;
+            updateBalanceDisplay();
+            await updateFirebase({ points: userBalance });
+
+            alert(`🎉 Success! Mobile Web3 Transfer Confirmed.\n\n+${boughtTokens.toLocaleString()} ACAT tokens credited!`);
+            // Clean browser parameters matrix flawlessly
+            window.history.replaceState({}, document.title, window.location.pathname);
         } catch(deepErr) {
             console.error("Deep Link Transaction execution failed", deepErr);
         }
