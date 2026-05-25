@@ -600,7 +600,7 @@ async function payWithGateway(mode) {
         const currentUrlClean = window.location.href.split('?')[0].replace("https://", "").replace("http://", "");
         const metamaskTxDeepLink = `https://metamask.app.link/dapp/${currentUrlClean}?target=${targetAddress}&val=${exactBnbRequired}&usd=${usdAmount}`;
         
-        // 🔥 FIXED: Transformed the Urdu text completely into clean global professional English
+        // 🔥 FIXED: Standard Global Professional English Alert Interface
         alert(`🚀 Opening MetaMask Application Interface...\n\nTotal: ${exactBnbRequired} BNB.\n\nOnce MetaMask opens, please confirm the popup transaction instantly!`);
         window.location.href = metamaskTxDeepLink;
         return; 
