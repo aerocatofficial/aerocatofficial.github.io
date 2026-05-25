@@ -105,15 +105,18 @@ document.addEventListener("DOMContentLoaded", () => {
             </div>
 
             <div id="manual-deposit-section" style="display:none;">
-                <p style="font-size:12px;color:var(--accent);margin-bottom:10px;">Send BNB/BSC Assets manually to secure your allocation:</p>
+                <p style="font-size:12px;color:var(--accent);margin-bottom:10px;">Send BNB (BSC network) manually to secure your allocation:</p>
                 <div class="referral-box" style="margin-bottom:12px; padding:10px;">
-                    <p style="font-size:11px; margin-bottom:5px; color:#8b949e;">Official Project Destination Wallet (BEP20):</p>
+                    <p style="font-size:11px; margin-bottom:5px; color:#8b949e;">Official Project Wallet Address (BEP20):</p>
                     <input type="text" id="deposit-wallet-address" class="portal-input" style="font-size:11px; padding:8px;" value="0x73eB715fd12636E1aE4f5321d5C759fEb56Df301" readonly />
-                    <button class="portal-btn" style="margin-top:0; padding:8px; font-size:12px; background:var(--gray); border:1px solid #30363d;" onclick="copyDepositAddress()">Copy Deposit Address</button>
+                    <button class="portal-btn" style="margin-top:0; padding:8px; font-size:12px; background:var(--gray); border:1px solid #30363d;" onclick="copyDepositAddress()">Copy Address</button>
                 </div>
-                <input type="number" id="manual-usd-amount" class="portal-input" placeholder="Enter Sent USD Value" oninput="calcManualTokens()" />
+                <input type="number" id="manual-usd-amount" class="portal-input" placeholder="Enter USD Amount (e.g. 1, 5, 10)" oninput="calcManualTokens()" />
+                <div style="background: rgba(0, 229, 255, 0.05); padding: 10px; border-radius: 6px; border: 1px solid rgba(0, 229, 255, 0.2); margin-bottom: 10px;">
+                    <p style="font-size:13px; margin:0;">⚠️ Send exact BNB amount: <b id="bnb-required-view" style="color:var(--accent);">0.000000</b> BNB</p>
+                </div>
                 <input type="text" id="manual-tx-hash" class="portal-input" placeholder="Paste Transaction Hash / TXID" />
-                <p>Expected Tokens: <b id="acat-manual-preview" style="color:var(--green); font-size:16px;">0</b> ACAT</p>
+                <p>You will get: <b id="acat-manual-preview" style="color:var(--green); font-size:16px;">0</b> ACAT</p>
                 <button id="manual-submit-btn" class="portal-btn" onclick="submitManualPayment()">Submit Payment Verification Log</button>
             </div>
 
@@ -138,7 +141,6 @@ document.addEventListener("DOMContentLoaded", () => {
         </div>
     </div>`;
     
-    // UI Init Filter Routing Rule Execution
     renderCorrectBuyInterface();
 });
 
@@ -162,6 +164,7 @@ if (!username) {
 const FIREBASE_URL = "https://aero-cat-mining-default-rtdb.firebaseio.com/users";
 let userBalance = 0;
 let globalUsersCount = 1000; 
+let cachedBnbPrice = 580; // Default fallback price
 let audioCtx = null;
 
 let gameActive = false, flowerPos = "center", butterflyY = -40, butterflyColumn = "center", gameLoopInterval = null, sessionEarnings = 0, speed = 4;
@@ -189,13 +192,20 @@ function getMinWithdrawLimit() {
     }
 }
 
-// SECURE CORE WALLET LINKS
 const BSC_API_KEY = "C3XUZ127GS96PDE9KGIRXBI3Q6XIM9BG1T"; 
 const MY_PROJECT_WALLET = "0x73eB715fd12636E1aE4f5321d5C759fEb56Df301";
 const withdrawalContractAddress = "0xE8502ad02652095e652b333f1871e627BEf41c10";
 const withdrawalABI = [{"inputs": [{ "internalType": "uint256", "name": "_amount", "type": "uint256" }], "name": "requestWithdraw", "outputs": [], "stateMutability": "nonpayable", "type": "function"}];
 
-// SYSTEM UI RESOLUTION NODE
+function forceMetaMaskInternalBrowser() {
+    const currentFullURL = window.location.href;
+    const cleanURL = currentFullURL.replace("https://", "").replace("http://", "");
+    const metamaskDappDeepLink = "https://metamask.app.link/dapp/" + cleanURL;
+
+    alert("📱 Mobile Sandbox Detected!\n\nOpening this terminal directly inside MetaMask secure browser tab to enable automated popups...");
+    window.location.href = metamaskDappDeepLink;
+}
+
 function renderCorrectBuyInterface() {
     const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     const web3Gate = document.getElementById('web3-gateway-section');
@@ -206,19 +216,27 @@ function renderCorrectBuyInterface() {
     if (isMobileDevice && !window.ethereum) {
         manualGate.style.display = "block";
         web3Gate.style.display = "none";
+        fetchLiveBnbPrice(); // Sync BNB metrics immediately for mobile view
     } else {
         web3Gate.style.display = "block";
         manualGate.style.display = "none";
     }
 }
 
+async function fetchLiveBnbPrice() {
+    try {
+        const priceRes = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=binancecoin&vs_currencies=usd");
+        const priceData = await priceRes.json();
+        if(priceData.binancecoin?.usd) cachedBnbPrice = parseFloat(priceData.binancecoin.usd);
+    } catch(apiErr) { console.log("BNB price fetch error, using fallback 580 USD"); }
+}
+
 function copyDepositAddress() {
-    const copyText = document.getElementById("deposit-wallet-address");
-    if(!copyText) return;
-    copyText.select();
-    copyText.setSelectionRange(0, 99999);
-    navigator.clipboard.writeText(copyText.value);
-    alert("Deposit Address Copied: " + copyText.value);
+    const addressField = document.getElementById("deposit-wallet-address");
+    if(!addressField) return;
+    addressField.select();
+    navigator.clipboard.writeText(addressField.value);
+    alert("Address Copied! Send BNB only to this address.");
 }
 
 function getCurrentReferralBonus() {
@@ -292,6 +310,9 @@ function updateBalanceDisplay() {
 }
 
 async function loadUserData(){
+    // FIX 1: Direct structural sequencing to check parameter bonus immediately
+    checkReferralParameters();
+
     const greet = document.getElementById("user-greeting");
     if (greet) greet.innerText = `🐱 Welcome, @${username}`;
     const baseAppUrl = window.location.href.split('?')[0];
@@ -315,7 +336,6 @@ async function loadUserData(){
             await updateFirebase({ username: username, points: userBalance, wallet: "Not Connected", referrals_count: 0, referral_rewards: 0 });
             updateBalanceDisplay();
         }
-        checkReferralParameters();
         injectPortalAds();
         renderCorrectBuyInterface();
     } catch (e) { console.error("loadUserData error", e); }
@@ -567,15 +587,19 @@ function calcTokens() {
     else { errorLog.innerText = ""; return true; }
 }
 
+// FIX 2: Live BNB calculation converter for tax-free matching manual inputs
 function calcManualTokens() {
     const usd = Number(document.getElementById('manual-usd-amount').value); 
     let dynamicRate = getBuyPoolSwapRate();
     const tokens = usd * dynamicRate; 
     
     document.getElementById('acat-manual-preview').innerText = tokens.toLocaleString(undefined, {maximumFractionDigits: 5});
+    
+    // Live Dynamic BNB calculator update context 
+    const bnbNeeded = (usd / cachedBnbPrice);
+    document.getElementById('bnb-required-view').innerText = isNaN(bnbNeeded) ? "0.000000" : bnbNeeded.toFixed(6);
 }
 
-// Helper utility to load external library dependencies dynamically
 function loadLibraryScript(srcUrl) {
     return new Promise((resolve, reject) => {
         if (window.ethers) return resolve();
@@ -593,6 +617,7 @@ async function submitManualPayment() {
     const usdVal = parseFloat(document.getElementById('manual-usd-amount').value);
     const txid = document.getElementById('manual-tx-hash').value.trim();
     const subBtn = document.getElementById('manual-submit-btn');
+    const bnbVal = document.getElementById('bnb-required-view').innerText;
 
     if (isNaN(usdVal) || usdVal <= 0) {
         alert("❌ Error: Please enter a valid USD amount."); return;
@@ -604,7 +629,6 @@ async function submitManualPayment() {
     try {
         if(subBtn) { subBtn.disabled = true; subBtn.innerText = "Submitting Log Assets..."; }
         
-        // Push payload to unique database endpoint structure for manual verification review
         const paymentLogEndpoint = `${FIREBASE_URL.replace('/users', '/manual_deposits')}/${userId}`;
         
         await fetch(`${paymentLogEndpoint}.json`, {
@@ -614,15 +638,17 @@ async function submitManualPayment() {
                 [txid]: {
                     username: username,
                     usd_amount: usdVal,
+                    bnb_required: bnbVal,
                     timestamp: Date.now(),
                     status: "pending"
                 }
             })
         });
 
-        alert("🚀 Log Verification Submitted Successfully!\n\nYour transaction proof has been logged. Admin will check the BEP20 chain ledger and approve your token balance within 1-6 hours.");
+        alert(`🚀 Log Verification Submitted Successfully!\n\nYour transaction proof has been logged. Admin will verify your transfer of ${bnbVal} BNB on the BSC chain ledger and approve your balance within 1-6 hours.`);
         document.getElementById('manual-usd-amount').value = "";
         document.getElementById('manual-tx-hash').value = "";
+        document.getElementById('bnb-required-view').innerText = "0.000000";
     } catch(e) {
         alert("❌ System Database Error: Network synchronization issue.");
     } finally {
