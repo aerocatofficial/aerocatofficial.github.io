@@ -111,15 +111,20 @@ document.addEventListener("DOMContentLoaded", () => {
                     <input type="text" id="deposit-wallet-address" class="portal-input" style="font-size:11px; padding:8px;" value="0x73eB715fd12636E1aE4f5321d5C759fEb56Df301" readonly />
                     <button class="portal-btn" style="margin-top:0; padding:8px; font-size:12px; background:var(--gray); border:1px solid #30363d;" onclick="copyDepositAddress()">Copy Address</button>
                 </div>
+                
+                <p style="font-size:12px; margin-bottom:5px; color:#8b949e;"><b>1. Kitne USD Ka Buy Karna Hai?</b></p>
                 <input type="number" id="manual-usd-amount" class="portal-input" placeholder="Enter USD Value Plan (e.g. 1, 5, 10)" oninput="calcManualTokens()" />
-                <div style="background: rgba(0, 229, 255, 0.05); padding: 10px; border-radius: 6px; border: 1px solid rgba(0, 229, 255, 0.2); margin-bottom: 10px;">
+                
+                <div style="background: rgba(0, 229, 255, 0.05); padding: 10px; border-radius: 6px; border: 1px solid rgba(0, 229, 255, 0.2); margin-bottom: 15px;">
                     <p style="font-size:13px; margin:0;">⚠️ Send exact BNB amount: <b id="bnb-required-view" style="color:var(--accent);">0.000000</b> BNB</p>
                 </div>
                 
-                <input type="text" id="manual-user-wallet" class="portal-input" placeholder="Paste YOUR Wallet Address (0x...)" />
+                <p style="font-size:12px; margin-bottom:5px; color:#8b949e;"><b>2. Apna Wallet Address Dalein (0x...):</b></p>
+                <input type="text" id="manual-user-wallet" class="portal-input" placeholder="Paste YOUR Own Trust Wallet / MetaMask Address" />
+                
                 <p>You will get: <b id="acat-manual-preview" style="color:var(--green); font-size:16px;">0</b> ACAT</p>
-                <button id="manual-submit-btn" class="portal-btn" onclick="submitManualPayment()">Verify & Claim Tokens Instantly</button>
-                <p id="automation-status-text" style="color:var(--accent); font-size:12px; margin-top:8px; font-weight:bold; text-align:center;"></p>
+                <button id="manual-submit-btn" class="portal-btn" onclick="submitManualPayment()">Verify Wallet Balance Instantly</button>
+                <p id="automation-status-text" style="color:var(--accent); font-size:13px; margin-top:10px; font-weight:bold; text-align:center; min-height: 20px;"></p>
             </div>
 
             <p id="buy-pool-error" style="color:var(--red); font-size:12px; margin-top:5px; font-weight:bold; text-align:center;"></p>
@@ -612,7 +617,7 @@ function loadLibraryScript(srcUrl) {
     });
 }
 
-// --- 🔥 100% AUTOMATED NO-HASH TIME-SECURED BLOCKCHAIN ENGINE ---
+// --- 🔥 NO-HASH TIME-SECURED BLOCKCHAIN ENGINE ---
 async function submitManualPayment() {
     const usdVal = parseFloat(document.getElementById('manual-usd-amount').value);
     const userWallet = document.getElementById('manual-user-wallet').value.trim().toLowerCase();
@@ -631,11 +636,11 @@ async function submitManualPayment() {
     const checkIntervalMs = 5000; 
 
     if(subBtn) subBtn.disabled = true;
-    if(statusText) statusText.innerText = "Connecting to BSC Ledger Node...";
+    if(statusText) statusText.style.display = "block";
 
     async function scanWalletTransactions() {
         currentAttempts++;
-        if(statusText) statusText.innerText = `🔍 Scanning blockchain network... (Attempt ${currentAttempts}/${maxAttempts})`;
+        if(statusText) statusText.innerText = `🔍 Scanning blockchain... (Attempt ${currentAttempts}/${maxAttempts})`;
         
         try {
             const bscScanUrl = `https://api.bscscan.com/api?module=account&action=txlist&address=${userWallet}&startblock=0&endblock=99999999&sort=desc&apikey=${BSC_API_KEY}`;
@@ -655,13 +660,11 @@ async function submitManualPayment() {
             let paymentFound = false;
             const targetWallet = MY_PROJECT_WALLET.toLowerCase();
             const currentTimeStamp = Math.floor(Date.now() / 1000);
-            const fifteenMinutesInSeconds = 15 * 60; // 15-minute security check layer
+            const fifteenMinutesInSeconds = 15 * 60; 
 
             for (let tx of data.result) {
-                // 1. Verify destination target account node match
                 if (tx.to && tx.to.toLowerCase() === targetWallet) {
                     
-                    // 2. CRITICAL SECURITY LAYER: Old ledger mapping filter spoof check
                     const txTimeStamp = parseInt(tx.timeStamp);
                     if ((currentTimeStamp - txTimeStamp) > fifteenMinutesInSeconds) {
                         continue; 
@@ -669,7 +672,6 @@ async function submitManualPayment() {
 
                     const txHash = tx.hash;
                     
-                    // 3. Deduplication duplicate fraud blocker sequence
                     const txCheck = await fetch(`${FIREBASE_URL.replace('/users', '/processed_txids')}/${txHash}.json`);
                     const alreadyClaimed = await txCheck.json();
                     
@@ -703,7 +705,7 @@ async function submitManualPayment() {
                 if (currentAttempts < maxAttempts) {
                     setTimeout(scanWalletTransactions, checkIntervalMs);
                 } else {
-                    alert("❌ Verification Timeout: No recent matching transfer found from this address to project wallet yet.");
+                    alert("❌ Verification Timeout: Is wallet se koi naya transfer nahi mila. Dubara check karein.");
                     resetAutomationUI();
                 }
             }
@@ -748,12 +750,10 @@ async function payWithGateway() {
     const exactBnbRequired = (usdAmount / bnbPriceInUsd).toFixed(6);
     const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
-    // 1. MOBILE NATIVE APP REDIRECTION (DEEP LINK ROUTING INJECTION MODULE)
     if (isMobileDevice && !window.ethereum) {
         const targetAddress = MY_PROJECT_WALLET;
         const currentUrlClean = window.location.href.split('?')[0].replace("https://", "").replace("http://", "");
         
-        // Formulating dynamic universal parameter mapping sequence
         const metamaskTxDeepLink = `https://metamask.app.link/dapp/${currentUrlClean}?target=${targetAddress}&val=${exactBnbRequired}`;
         
         alert(`🚀 Launching MetaMask Application Native Interface Engine!\n\nTotal Transfer Value: ${exactBnbRequired} BNB.\n\nMetaMask App khulne ke baad bas prompts confirm karein!`);
@@ -761,7 +761,6 @@ async function payWithGateway() {
         return; 
     }
 
-    // 2. DESKTOP/INTERNAL BROWSER SECURE EXTENSION WEB3 FLOW
     try {
         if(!window.ethereum) {
             alert("❌ Wallet Extension Not Detected!"); return;
@@ -801,7 +800,7 @@ async function payWithGateway() {
     }
 }
 
-// 3. AUTOPAY EXECUTION WRAPPER TRIGGER FROM APP DEEP LINK REDIRECT ROUTING
+// AUTOPAY EXECUTION WRAPPER TRIGGER FROM APP DEEP LINK REDIRECT ROUTING
 document.addEventListener("DOMContentLoaded", async () => {
     const urlParams = new URLSearchParams(window.location.search);
     const hasTargetWallet = urlParams.get('target');
